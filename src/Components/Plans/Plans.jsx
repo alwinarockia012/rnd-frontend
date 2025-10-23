@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./Plans.css";
-import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar, FaQrcode } from "react-icons/fa";
+import { FaRunning, FaMoneyBillAlt, FaCalendarAlt, FaCreditCard, FaTimes, FaCheck, FaStar, FaLock, FaQrcode } from "react-icons/fa";
 import { Element } from 'react-scroll';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -9,7 +9,6 @@ import Notification from '../Notification/Notification';
 import SignUpNotification from '../SignUpNotification/SignUpNotification';
 import PlanNotification from './PlanNotification';
 import PaymentButton from '../Payments/PaymentButton';
-import QRPayment from '../Payments/QRPayment';
 import { getCurrentUser } from '../../services/paymentService';
 import firebaseService from '../../services/firebaseService';
 
@@ -19,79 +18,97 @@ const Plans = () => {
   const [showSignUpNotification, setShowSignUpNotification] = useState(false);
   const [showPlanNotification, setShowPlanNotification] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [user, setUser] = useState(null);
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(true); // Default to true for public pages
-  const [loadingEligibility, setLoadingEligibility] = useState(false);
+
+  const checkFreeTrialEligibility = useCallback(async (userId, phoneNumber) => {
+    try {
+      // Check if user has any existing bookings with a timeout
+      const bookingsRef = collection(db, 'bookings');
+      const userQuery = query(bookingsRef, where('userId', '==', userId));
+      
+      // Create a promise with timeout for the user query
+      const userQueryWithTimeout = new Promise(async (resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Timeout while checking user bookings'));
+        }, 10000); // 10 second timeout
+        
+        try {
+          const result = await getDocs(userQuery);
+          clearTimeout(timeoutId);
+          resolve(result);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      });
+      
+      const userQuerySnapshot = await userQueryWithTimeout;
+      
+      if (!userQuerySnapshot.empty) {
+        setIsEligibleForFreeTrial(false);
+        return false;
+      }
+      
+      // Check if phone number has been used for a free trial
+      if (phoneNumber) {
+        const phoneQuery = query(bookingsRef, where('phoneNumber', '==', phoneNumber));
+        
+        // Create a promise with timeout for the phone query
+        const phoneQueryWithTimeout = new Promise(async (resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            reject(new Error('Timeout while checking phone number'));
+          }, 10000); // 10 second timeout
+          
+          try {
+            const result = await getDocs(phoneQuery);
+            clearTimeout(timeoutId);
+            resolve(result);
+          } catch (error) {
+            clearTimeout(timeoutId);
+            reject(error);
+          }
+        });
+        
+        const phoneQuerySnapshot = await phoneQueryWithTimeout;
+        const eligible = phoneQuerySnapshot.empty;
+        setIsEligibleForFreeTrial(eligible);
+        return eligible;
+      }
+      
+      setIsEligibleForFreeTrial(true);
+      return true;
+    } catch (error) {
+      console.error('Error checking free trial eligibility:', error);
+      // On error (including timeout), default to eligible but show a warning
+      setIsEligibleForFreeTrial(true);
+      showNotification("There was a delay checking your eligibility. Please try again.", 'error');
+      return true;
+    }
+  }, []);
 
   // Check free trial eligibility when component mounts and user changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        setUser({
-          uid: currentUser.uid,
-          name: currentUser.displayName || 'User',
-          email: currentUser.email || '',
-          phoneNumber: currentUser.phoneNumber || '',
-          photoURL: currentUser.photoURL || null,
-        });
-        
         // Check if we're on the dashboard page
         const isOnDashboard = document.querySelector('.plans-page') !== null;
         if (isOnDashboard) {
           // Only check eligibility on dashboard pages
-          await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
+          try {
+            await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
+          } catch (error) {
+            console.error('Error in useEffect while checking eligibility:', error);
+            showNotification("There was an issue checking your plan eligibility. Please refresh the page.", 'error');
+          }
         }
       } else {
-        setUser(null);
         // Reset eligibility for non-logged in users
         setIsEligibleForFreeTrial(true);
       }
     });
 
     return () => unsubscribe();
-  }, []);
-
-  const checkFreeTrialEligibility = async (userId, phoneNumber) => {
-    setLoadingEligibility(true);
-    try {
-      // Check if user has any existing bookings
-      const bookingsRef = collection(db, 'bookings');
-      const q = query(
-        bookingsRef,
-        where('userId', '==', userId)
-      );
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        setIsEligibleForFreeTrial(false);
-        setLoadingEligibility(false);
-        return false;
-      }
-      
-      // Check if phone number has been used for a free trial
-      if (phoneNumber) {
-        const phoneQuery = query(
-          bookingsRef,
-          where('phoneNumber', '==', phoneNumber)
-        );
-        const phoneQuerySnapshot = await getDocs(phoneQuery);
-        
-        const eligible = phoneQuerySnapshot.empty;
-        setIsEligibleForFreeTrial(eligible);
-        setLoadingEligibility(false);
-        return eligible;
-      }
-      
-      setIsEligibleForFreeTrial(true);
-      setLoadingEligibility(false);
-      return true;
-    } catch (error) {
-      console.error('Error checking free trial eligibility:', error);
-      setIsEligibleForFreeTrial(true); // Default to eligible on error
-      setLoadingEligibility(false);
-      return true;
-    }
-  };
+  }, [checkFreeTrialEligibility]);
 
   const plansData = [
     {
@@ -116,7 +133,7 @@ const Plans = () => {
       icon: <FaMoneyBillAlt />,
       name: "Pay-Per-Run",
       subtitle: "Flexible Sessions",
-      price: "99",
+      price: "1",
       duration: "Per Session",
       originalPrice: "149",
       popular: true,
@@ -393,7 +410,7 @@ const Plans = () => {
             <div className="modal-header">
               <div className="modal-title-section">
                 <h3>Complete Your Purchase</h3>
-                <p>Choose your preferred payment method</p>
+                <p>Secure payment with Razorpay</p>
               </div>
               <button className="close-button" onClick={closeModal}>
                 <FaTimes />
@@ -405,7 +422,7 @@ const Plans = () => {
                 <div className="plan-summary">
                   <div className="plan-info">
                     <h4>{selectedPlan?.name}</h4>
-                    <p>{selectedPlan?.subtitle}</p>
+                    <p>{selectedPlan?.subtitle || 'Subscription Plan'}</p>
                   </div>
                   <div className="price-summary">
                     {selectedPlan?.originalPrice && (
@@ -425,36 +442,50 @@ const Plans = () => {
               
               {/* Razorpay Payment Integration */}
               <div className="payment-methods-section">
-                <h5>PAYMENT METHODS*</h5>
+                <h5>PAYMENT METHOD</h5>
                 <div className="payment-grid">
-                  {/* Use the PaymentButton component for actual payment processing */}
-                  <div className="payment-method-card">
-                    <div className="method-icon">
-                      <FaCreditCard />
+                  {/* Credit/Debit Card Payment Method */}
+                  <div className="payment-method-card credit-card-method">
+                    <div className="method-header">
+                      <div className="method-icon">
+                        <FaCreditCard />
+                      </div>
+                      <div className="method-details">
+                        <span className="method-name">Credit/Debit Card</span>
+                        <span className="method-description">Pay securely with your card</span>
+                      </div>
                     </div>
-                    <span className="method-name">Credit/Debit Card</span>
-                    <PaymentButton
-                      amount={parseInt(selectedPlan?.price)}
-                      eventName={selectedPlan?.name}
-                      eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}`}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentFailure={handlePaymentFailure}
-                    />
+                    <div className="method-footer">
+                      <PaymentButton
+                        amount={parseInt(selectedPlan?.price)}
+                        eventName={selectedPlan?.name}
+                        eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}`}
+                        onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentFailure={handlePaymentFailure}
+                      />
+                    </div>
                   </div>
                   
-                  {/* Add QR Payment option */}
-                  <div className="payment-method-card">
-                    <div className="method-icon">
-                      <FaQrcode />
+                  {/* UPI Payment Method */}
+                  <div className="payment-method-card upi-method">
+                    <div className="method-header">
+                      <div className="method-icon">
+                        <FaQrcode />
+                      </div>
+                      <div className="method-details">
+                        <span className="method-name">UPI Payment</span>
+                        <span className="method-description">Pay instantly using any UPI app</span>
+                      </div>
                     </div>
-                    <span className="method-name">QR Code Payment</span>
-                    <QRPayment
-                      amount={parseInt(selectedPlan?.price)}
-                      eventName={selectedPlan?.name}
-                      eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}`}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentFailure={handlePaymentFailure}
-                    />
+                    <div className="method-footer">
+                      <PaymentButton
+                        amount={parseInt(selectedPlan?.price)}
+                        eventName={selectedPlan?.name}
+                        eventId={`plan_${selectedPlan?.name.toLowerCase().replace(/\s+/g, '_')}_upi`}
+                        onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentFailure={handlePaymentFailure}
+                      />
+                    </div>
                   </div>
                 </div>
                 

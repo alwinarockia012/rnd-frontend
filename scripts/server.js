@@ -26,8 +26,25 @@ app.use((req, res, next) => {
 
 // Middleware with CORS configuration for development
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5001'], // Allow frontend origins
-  credentials: true
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:3001', 
+    'http://localhost:5003',
+    // Local network IP for mobile testing
+    'http://192.168.1.21:3000',
+    // Ngrok URLs for mobile testing
+    'https://*.ngrok.io',
+    'https://*.ngrok-free.app',
+    // LocalTunnel URLs
+    'https://*.loca.lt',
+    // Serveo URLs
+    'https://*.serveo.net',
+    // Generic patterns for tunneling services
+    'https://*',
+    'http://*'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 app.use(express.json());
 

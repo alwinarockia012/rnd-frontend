@@ -435,7 +435,7 @@
 }
 
 .payment-modal {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background: linear-gradient(135deg, var(--appColor) 0%, #2d2d2d 100%);
   border-radius: 24px;
   padding: 0;
   width: 100%;
@@ -445,6 +445,9 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes slideUp {
@@ -464,7 +467,7 @@
   margin: 0 0 0.5rem 0;
   font-size: 1.75rem;
   font-weight: 700;
-  color: #F15A24;
+  color: var(--orange);
 }
 
 .modal-title-section p {
@@ -485,25 +488,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .close-button:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: rotate(90deg);
-  border-color: #F15A24;
+  border-color: var(--orange);
 }
 
 .modal-body {
   padding: 1rem 2rem 2rem 2rem;
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
 /* Selected Plan Card */
 .selected-plan-card {
-  background: linear-gradient(135deg, rgba(241, 90, 36, 0.1) 0%, rgba(156, 39, 176, 0.05) 100%);
-  border: 1px solid rgba(241, 90, 36, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .plan-summary {
@@ -511,6 +518,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .plan-info h4 {
@@ -528,6 +537,7 @@
 
 .price-summary {
   text-align: right;
+  min-width: 120px;
 }
 
 .original-price-modal {
@@ -570,16 +580,9 @@
   position: relative;
 }
 
-/* Adding asterisk for required field following form standards */
-.payment-methods-section h5::after {
-  content: '*';
-  color: #F15A24;
-  margin-left: 0.25rem;
-}
-
 .payment-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -589,17 +592,17 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  padding: 1.25rem;
+  padding: 1.5rem;
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   position: relative;
   overflow: hidden;
   /* Following form-group container standards */
   margin-bottom: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 .payment-method-card::before {
@@ -624,57 +627,115 @@
   box-shadow: 0 8px 25px rgba(241, 90, 36, 0.2);
 }
 
+.payment-method-card.credit-card-method {
+  background: linear-gradient(135deg, rgba(241, 90, 36, 0.15) 0%, rgba(241, 90, 36, 0.05) 100%);
+  border: 1px solid rgba(241, 90, 36, 0.3);
+}
+
+.payment-method-card.credit-card-method:hover {
+  background: linear-gradient(135deg, rgba(241, 90, 36, 0.25) 0%, rgba(241, 90, 36, 0.1) 100%);
+  border-color: #F15A24;
+  box-shadow: 0 12px 30px rgba(241, 90, 36, 0.3);
+}
+
+.payment-method-card.upi-method {
+  background: linear-gradient(135deg, rgba(156, 39, 176, 0.15) 0%, rgba(156, 39, 176, 0.05) 100%);
+  border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
+.payment-method-card.upi-method:hover {
+  background: linear-gradient(135deg, rgba(156, 39, 176, 0.25) 0%, rgba(156, 39, 176, 0.1) 100%);
+  border-color: #9c27b0;
+  box-shadow: 0 12px 30px rgba(156, 39, 176, 0.3);
+}
+
+.method-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .method-icon {
-  font-size: 1.5rem;
-  width: 3rem;
-  height: 3rem;
+  font-size: 1.75rem;
+  width: 3.5rem;
+  height: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
   flex-shrink: 0;
+  color: #F15A24;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.payment-method-card.upi-method .method-icon {
+  color: #9c27b0;
+}
+
+.method-details {
+  flex-grow: 1;
+  min-width: 0; /* Allow text to truncate */
 }
 
 .method-name {
-  flex-grow: 1;
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.1rem;
   /* Clear heading style following form standards */
-  color: #e0e0e0;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.method-arrow {
-  font-size: 1.25rem;
-  transition: transform 0.3s ease;
-  opacity: 0.6;
+.method-description {
+  font-size: 0.9rem;
+  color: #b0b0b0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.payment-method-card:hover .method-arrow {
-  transform: translateX(5px);
-  opacity: 1;
+.method-footer {
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
 /* Razorpay Payment Button Styling */
 .payment-method-card .payment-button {
-  background: transparent;
+  background: linear-gradient(45deg, #F15A24, #ff7b4d);
   border: none;
-  color: inherit;
+  color: white;
   font: inherit;
-  padding: 0;
+  padding: 0.75rem 1.5rem;
   margin: 0;
   cursor: pointer;
   width: 100%;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  text-align: center;
+  display: block;
+  border-radius: 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.3);
 }
 
 .payment-method-card .payment-button:hover {
-  background: transparent;
-  transform: none;
-  box-shadow: none;
+  background: linear-gradient(45deg, #ff7b4d, #F15A24);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(241, 90, 36, 0.5);
+}
+
+.payment-method-card.upi-method .payment-button {
+  background: linear-gradient(45deg, #9c27b0, #c2185b);
+  box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+}
+
+.payment-method-card.upi-method .payment-button:hover {
+  background: linear-gradient(45deg, #c2185b, #9c27b0);
+  box-shadow: 0 7px 20px rgba(156, 39, 176, 0.5);
 }
 
 .payment-method-card .payment-button:hover::before {
@@ -692,81 +753,12 @@
   border-radius: 12px;
   color: #00ff88;
   font-size: 0.9rem;
+  flex-wrap: wrap;
 }
 
 .security-icon {
   font-size: 1rem;
   flex-shrink: 0;
-}
-
-/* Disabled Plan Card Styles */
-.plan-card.disabled {
-  opacity: 0.6;
-  filter: grayscale(100%);
-  pointer-events: none;
-  position: relative;
-}
-
-.plan-card.disabled::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 24px;
-  z-index: 5;
-}
-
-.plan-disabled-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 6;
-  pointer-events: none;
-}
-
-.disabled-message {
-  background: rgba(255, 0, 0, 0.8);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-
-.cta-button.disabled {
-  background: #666 !important;
-  color: #ccc !important;
-  cursor: not-allowed !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-.cta-button.disabled:hover {
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-.cta-button.disabled::before {
-  display: none !important;
 }
 
 /* Responsive Design */
@@ -827,10 +819,15 @@
     font-size: 1.1rem;
   }
   
-  .modal-content {
-    width: 95%;
-    max-width: none;
-    margin: 1rem;
+  .payment-modal-overlay {
+    padding: 0.5rem;
+    align-items: stretch;
+  }
+  
+  .payment-modal {
+    border-radius: 16px;
+    max-height: 100vh;
+    margin: 0.5rem;
   }
   
   .modal-header {
@@ -842,11 +839,52 @@
   }
   
   .selected-plan-card {
-    padding: 1.5rem;
+    padding: 1.25rem;
+  }
+  
+  .plan-summary {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .price-summary {
+    text-align: center;
+    width: 100%;
   }
   
   .payment-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .payment-method-card {
+    padding: 1.25rem;
+    gap: 0.75rem;
+  }
+  
+  .method-icon {
+    font-size: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  .method-name {
+    font-size: 1rem;
+  }
+  
+  .method-description {
+    font-size: 0.85rem;
+  }
+  
+  .security-note {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .final-price {
+    font-size: 1.75rem;
   }
 }
 
@@ -888,182 +926,51 @@
     padding: 0.9rem;
     font-size: 1rem;
   }
-}
-
-/* Add these styles to the existing CSS file */
-
-.payment-method-card.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  position: relative;
-}
-
-.payment-method-card.disabled:hover {
-  transform: none;
-  box-shadow: 0 5px 20px -5px rgba(255, 100, 50, 0.75);
-}
-
-.security-note {
-  text-align: center;
-  margin-top: 20px;
-  padding: 15px;
-  background-color: rgba(241, 90, 36, 0.1);
-  border-radius: 8px;
-  font-style: italic;
-}
-
-.payment-methods-test {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.payment-methods-test h4 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #e0e0e0;
-  font-weight: 600;
-}
-
-/* Payment Method Card Styles (repeated for consistency) */
-.payment-method-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  margin-bottom: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.payment-method-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s ease;
-}
-
-.payment-method-card:hover::before {
-  left: 100%;
-}
-
-.payment-method-card:hover {
-  background: rgba(241, 90, 36, 0.1);
-  border-color: #F15A24;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(241, 90, 36, 0.2);
-}
-
-.method-icon {
-  font-size: 1.5rem;
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.method-name {
-  flex-grow: 1;
-  font-weight: 600;
-  font-size: 1rem;
-  /* Clear heading style following form standards */
-  color: #e0e0e0;
-}
-
-.method-arrow {
-  font-size: 1.25rem;
-  transition: transform 0.3s ease;
-  opacity: 0.6;
-}
-
-.payment-method-card:hover .method-arrow {
-  transform: translateX(5px);
-  opacity: 1;
-}
-
-/* Razorpay Payment Button Styling */
-.payment-method-card .payment-button {
-  background: transparent;
-  border: none;
-  color: inherit;
-  font: inherit;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.payment-method-card .payment-button:hover {
-  background: transparent;
-  transform: none;
-  box-shadow: none;
-}
-
-.payment-method-card .payment-button:hover::before {
-  display: none;
-}
-
-/* QR Payment Button Styling */
-.payment-method-card .qr-payment-container {
-  width: 100%;
-}
-
-.payment-method-card .qr-payment-button {
-  background: transparent;
-  border: none;
-  color: inherit;
-  font: inherit;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.payment-method-card .qr-payment-button:hover {
-  background: transparent;
-  transform: none;
-  box-shadow: none;
-}
-
-.payment-method-card .qr-payment-button:hover::before {
-  display: none;
-}
-
-/* Security Note */
-.security-note {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: rgba(0, 255, 136, 0.05);
-  border: 1px solid rgba(0, 255, 136, 0.1);
-  border-radius: 12px;
-  color: #00ff88;
-  font-size: 0.9rem;
-}
-
-.security-icon {
-  font-size: 1rem;
-  flex-shrink: 0;
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .modal-title-section h3 {
+    font-size: 1.5rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .selected-plan-card {
+    padding: 1rem;
+  }
+  
+  .payment-method-card {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .method-icon {
+    margin-bottom: 0.75rem;
+  }
+  
+  .method-details {
+    width: 100%;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+  
+  .method-name, .method-description {
+    white-space: normal;
+    text-align: center;
+  }
+  
+  .security-note {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .security-icon {
+    align-self: center;
+  }
 }

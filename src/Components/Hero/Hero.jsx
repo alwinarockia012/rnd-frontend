@@ -182,10 +182,10 @@ const Hero = () => {
               }}
             >
               <Link to="/SignIn" style={styles.item} onClick={() => setMenuOpen(false)}>
-                Sign In
+                Log in
               </Link>
               <Link to={isLoggedIn ? "/dashboard" : "/signup"} style={styles.cta} onClick={() => setMenuOpen(false)}>
-                {isLoggedIn ? "Explore" : "Join Now"}
+                {isLoggedIn ? "Explore" : "Sign Up"}
               </Link>
             </div>
           )}

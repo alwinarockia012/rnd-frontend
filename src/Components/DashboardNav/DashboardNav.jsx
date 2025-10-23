@@ -12,7 +12,6 @@ const DashboardNav = () => {
   // const { currentUser } = useAuth();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
-  const [notificationType, setNotificationType] = useState('warning');
   const [notificationMessage, setNotificationMessage] = useState('');
   const [pendingAction, setPendingAction] = useState(null);
   const profileMenuRef = useRef(null);
@@ -58,7 +57,6 @@ const DashboardNav = () => {
   const handleGoToLandingPageClick = () => {
     // Show confirmation notification instead of navigating directly
     setNotificationMessage('Are you sure you want to go to the landing page?');
-    setNotificationType('warning');
     setPendingAction('landing');
     setShowNotification(true);
     setIsProfileMenuOpen(false);
@@ -67,7 +65,6 @@ const DashboardNav = () => {
   const handleLogout = async () => {
     // Show confirmation notification instead of logging out directly
     setNotificationMessage('Are you sure you want to logout?');
-    setNotificationType('warning');
     setPendingAction('logout');
     setShowNotification(true);
     setIsProfileMenuOpen(false);

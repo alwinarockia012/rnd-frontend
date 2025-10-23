@@ -58,6 +58,34 @@ npm start
 
 Your app will be available at `http://localhost:3000`
 
+### 5. Mobile Testing Options
+
+For testing your app on mobile devices, you have several options:
+
+1. **Ngrok** (if working):
+   ```bash
+   # Expose your frontend for mobile testing
+   npm run ngrok
+
+   # Or expose both frontend and backend
+   npm run ngrok:both
+   ```
+
+2. **LocalTunnel** (often works better on Windows):
+   ```bash
+   # Install locally
+   npm install -g localtunnel
+   
+   # Expose your app
+   lt --port 3000
+   ```
+
+3. **Network Access** (same WiFi):
+   Find your machine's IP address and access `http://YOUR_IP:3000` from your mobile device.
+   You can find your local IP address with: `npm run local-ip`
+
+See [NGROK_MOBILE_TESTING.md](NGROK_MOBILE_TESTING.md) for detailed instructions on all options.
+
 ## 📱 **App Navigation**
 
 ### Public Routes
@@ -79,6 +107,22 @@ Your app will be available at `http://localhost:3000`
 - **Real-time Validation**: Client-side form validation
 - **Secure Configuration**: Environment-based config management
 
+## 💳 **Payment Processing**
+
+This application uses Razorpay for payment processing. To enable payments:
+
+1. Sign up for a Razorpay account at https://razorpay.com/
+2. Get your test API keys from the Razorpay Dashboard
+3. Update the `.env` file with your actual test keys
+4. See [RAZORPAY_SETUP.md](RAZORPAY_SETUP.md) for detailed instructions
+
+For testing payments, use Razorpay's test card:
+- Card Number: 4111 1111 1111 1111
+- Expiry: Any future date
+- CVV: 123
+- Name: Any name
+- Country: India
+
 ## 🛠️ **Development Scripts**
 
 ```bash
@@ -93,6 +137,12 @@ npm test
 
 # Run Cypress E2E tests
 npx cypress open
+
+# Mobile testing options
+npm run ngrok          # Expose frontend (port 3000)
+npm run ngrok:server   # Expose backend (port 5001)
+npm run ngrok:both     # Run both with ngrok tunnels
+npm run local-ip       # Show your local IP for network access
 
 # Netlify deployment commands
 npm run netlify:SignIn    # SignIn to Netlify

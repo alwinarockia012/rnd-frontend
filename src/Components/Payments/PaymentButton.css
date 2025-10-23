@@ -16,6 +16,9 @@
   min-width: 200px;
   position: relative;
   overflow: hidden;
+  margin-left: auto;
+  width: 100%;
+  max-width: 300px;
 }
 
 .payment-button:hover {
@@ -44,11 +47,86 @@
   left: 100%;
 }
 
+/* Special styling for ₹1 payment button */
+.payment-button.one-rupee {
+  background: linear-gradient(135deg, #4CAF50, #8BC34A);
+  font-size: 1.3rem;
+  padding: 1.2rem 2rem;
+  min-width: 220px;
+  border-radius: 50px;
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #FFF;
+  animation: floatAndPulse 3s ease-in-out infinite;
+  background-size: 200% 200%;
+  max-width: none;
+  width: 100%;
+}
+
+.payment-button.one-rupee::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  transform: rotate(30deg);
+}
+
+.payment-button.one-rupee:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 12px 30px rgba(76, 175, 80, 0.7);
+  animation: none;
+  background-position: 100% 100%;
+}
+
+.payment-button.one-rupee:hover::after {
+  opacity: 0.3;
+}
+
+.payment-button.one-rupee:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 10px rgba(76, 175, 80, 0.5);
+}
+
+@keyframes floatAndPulse {
+  0% {
+    transform: translateY(0px) scale(1);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    background-position: 0% 50%;
+  }
+  25% {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+    background-position: 100% 50%;
+  }
+  50% {
+    transform: translateY(0px) scale(1);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    background-position: 0% 50%;
+  }
+  75% {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 7px 22px rgba(76, 175, 80, 0.45);
+    background-position: 100% 50%;
+  }
+  100% {
+    transform: translateY(0px) scale(1);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    background-position: 0% 50%;
+  }
+}
+
 .button-content {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   z-index: 1;
+  position: relative;
 }
 
 .spinner-icon {
@@ -62,6 +140,107 @@
 
 .card-icon, .lock-icon, .qr-icon {
   font-size: 1.2rem;
+}
+
+/* Special icon styling for ₹1 button */
+.one-rupee .card-icon {
+  font-size: 1.5rem;
+  color: #FFD700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  animation: floatAndGlow 2s ease-in-out infinite;
+  position: relative;
+}
+
+.one-rupee .lock-icon {
+  font-size: 1rem;
+  color: #E0E0E0;
+}
+
+@keyframes floatAndGlow {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  }
+  25% {
+    transform: translateY(-3px) rotate(5deg);
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+  }
+  50% {
+    transform: translateY(0px) rotate(0deg);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  }
+  75% {
+    transform: translateY(-2px) rotate(-3deg);
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  }
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .payment-button {
+    padding: 0.8rem 1.2rem;
+    font-size: 1rem;
+    min-width: 180px;
+    max-width: 100%;
+  }
+  
+  .payment-button.one-rupee {
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    min-width: 100%;
+    max-width: 100%;
+    border-radius: 40px;
+  }
+  
+  .button-content {
+    gap: 0.5rem;
+  }
+  
+  .card-icon, .lock-icon, .qr-icon {
+    font-size: 1rem;
+  }
+  
+  .one-rupee .card-icon {
+    font-size: 1.2rem;
+  }
+  
+  .one-rupee .lock-icon {
+    font-size: 0.8rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .payment-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    min-width: 100%;
+  }
+  
+  .payment-button.one-rupee {
+    padding: 0.9rem 1.25rem;
+    font-size: 1rem;
+    border-radius: 35px;
+  }
+  
+  .button-content {
+    gap: 0.4rem;
+  }
+  
+  .card-icon, .lock-icon, .qr-icon {
+    font-size: 0.9rem;
+  }
+  
+  .one-rupee .card-icon {
+    font-size: 1.1rem;
+  }
+  
+  .one-rupee .lock-icon {
+    font-size: 0.7rem;
+  }
 }
 
 .qr-payment-button {

@@ -108,6 +108,27 @@ const SignUp = () => {
     e.preventDefault();
     setSubmitting(true);
 
+    // Validate date of birth (must be at least 13 years old)
+    const formData = new FormData(e.target);
+    const dob = formData.get('dob');
+    if (dob) {
+      const today = new Date();
+      const birthDate = new Date(dob);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      // Adjust age if birthday hasn't occurred this year yet
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      if (age < 13) {
+        showNotification("You must be at least 13 years old to register.", "error");
+        setSubmitting(false);
+        return;
+      }
+    }
+
     if (!confirmationResult) {
       showNotification("Please get an OTP first.", "error");
       setSubmitting(false);
@@ -118,7 +139,6 @@ const SignUp = () => {
       const userCredential = await confirmationResult.confirm(otp);
       const user = userCredential.user;
 
-      const formData = new FormData(e.target);
       const rawData = Object.fromEntries(formData.entries());
 
       // Update Firebase Auth profile with displayName
@@ -187,7 +207,7 @@ const SignUp = () => {
         </div>
         <div className="top-buttons">
           <button className="toggle-btn active">Sign Up</button>
-          <button className="toggle-btn" onClick={handleSignInClick}>SignIn</button>
+          <button className="toggle-btn" onClick={handleSignInClick}>Log in</button>
         </div>
         <div className="club">
           <h2>Join the club</h2>
@@ -212,7 +232,12 @@ const SignUp = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Date of Birth *</label>
-              <input type="date" name="dob" required />
+              <input 
+                type="date" 
+                name="dob" 
+                required 
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
+              />
             </div>
             <div className="form-group">
               <label>Profession *</label>

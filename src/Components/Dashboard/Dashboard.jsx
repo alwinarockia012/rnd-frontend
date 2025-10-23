@@ -533,9 +533,9 @@ Thank you for booking with R&D - Run and Develop!
                     <p className="no-events-message">No events found.</p>
                     <button 
                       className="book-event-btn"
-                      onClick={() => navigate('/events')}
+                      onClick={() => navigate('/plans')}
                     >
-                      Book an Event
+                      Book Your Slots
                     </button>
                   </div>
                 )}
@@ -715,8 +715,9 @@ Thank you for booking with R&D - Run and Develop!
               </div>
               <div className="events-list">
                 {bookings && bookings.length > 0 ? (
-                  bookings
-                    .sort((a, b) => {
+                  (() => {
+                    // Sort bookings by event date (descending - newest first)
+                    const sortedBookings = [...bookings].sort((a, b) => {
                       // Sort by event date (descending - newest first)
                       // Handle different date formats for sorting
                       let dateA, dateB;
@@ -746,93 +747,96 @@ Thank you for booking with R&D - Run and Develop!
                       }
                       
                       return dateB - dateA; // Descending order
-                    })
-                    .map((booking) => {
-                      // Handle date display
-                      let displayDate;
-                      if (booking.eventDate instanceof Date) {
-                        displayDate = booking.eventDate;
-                      } else if (booking.eventDate.toDate && typeof booking.eventDate.toDate === 'function') {
-                        displayDate = booking.eventDate.toDate();
-                      } else if (typeof booking.eventDate === 'string') {
-                        displayDate = new Date(booking.eventDate);
-                      } else if (booking.eventDate) {
-                        displayDate = new Date(booking.eventDate);
-                      } else {
-                        displayDate = new Date(); // Default to now if no date
-                      }
-                      
-                      return (
-                        <div key={booking.id} className="ticket-item-container" 
-                             style={{ 
-                               padding: '0.75rem', 
-                               marginBottom: '0.5rem',
-                               minHeight: 'auto'
-                             }}>
-                          {/* Compact Ticket Info */}
-                          <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center',
-                            flexWrap: 'wrap'
-                          }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <h4 style={{ 
-                                margin: '0 0 0.25rem 0', 
-                                fontSize: '0.95rem',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>
-                                {booking.eventName || 'Event Name'}
-                              </h4>
-                              <p className="event-details" style={{ 
-                                margin: 0, 
-                                fontSize: '0.8rem',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>
-                                {displayDate ? formatDate(displayDate) : 'Date not available'}
-                                • {booking.eventTime || 'Time not available'}
-                              </p>
-                              <p className="booking-id-preview" style={{ 
-                                margin: '0.1rem 0 0 0', 
-                                fontSize: '0.7rem' 
-                              }}>
-                                ID: {booking.id ? booking.id.substring(0, 8) : 'N/A'}
-                              </p>
-                              <p className="event-status" style={{ 
-                                margin: '0.1rem 0 0 0', 
-                                fontSize: '0.7rem' 
-                              }}>
-                                Status: <span className={booking.status || 'confirmed'}>
-                                  {booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'Confirmed'}
-                                </span>
-                              </p>
-                            </div>
-                            
-                            {/* View Ticket Button */}
-                            <button 
-                              onClick={() => {
-                                openFullScreenTicket(booking);
-                              }}
-                              className="view-ticket-btn"
-                            >
-                              View
-                            </button>
+                    });
+                    
+                    // Get only the most recent booking
+                    const recentBooking = sortedBookings[0];
+                    
+                    // Handle date display for the recent booking
+                    let displayDate;
+                    if (recentBooking.eventDate instanceof Date) {
+                      displayDate = recentBooking.eventDate;
+                    } else if (recentBooking.eventDate.toDate && typeof recentBooking.eventDate.toDate === 'function') {
+                      displayDate = recentBooking.eventDate.toDate();
+                    } else if (typeof recentBooking.eventDate === 'string') {
+                      displayDate = new Date(recentBooking.eventDate);
+                    } else if (recentBooking.eventDate) {
+                      displayDate = new Date(recentBooking.eventDate);
+                    } else {
+                      displayDate = new Date(); // Default to now if no date
+                    }
+                    
+                    return (
+                      <div key={recentBooking.id} className="ticket-item-container" 
+                           style={{ 
+                             padding: '0.75rem', 
+                             marginBottom: '0.5rem',
+                             minHeight: 'auto'
+                           }}>
+                        {/* Compact Ticket Info */}
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          flexWrap: 'wrap'
+                        }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <h4 style={{ 
+                              margin: '0 0 0.25rem 0', 
+                              fontSize: '0.95rem',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {recentBooking.eventName || 'Event Name'}
+                            </h4>
+                            <p className="event-details" style={{ 
+                              margin: 0, 
+                              fontSize: '0.8rem',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {displayDate ? formatDate(displayDate) : 'Date not available'}
+                              • {recentBooking.eventTime || 'Time not available'}
+                            </p>
+                            <p className="booking-id-preview" style={{ 
+                              margin: '0.1rem 0 0 0', 
+                              fontSize: '0.7rem' 
+                            }}>
+                              ID: {recentBooking.id ? recentBooking.id.substring(0, 8) : 'N/A'}
+                            </p>
+                            <p className="event-status" style={{ 
+                              margin: '0.1rem 0 0 0', 
+                              fontSize: '0.7rem' 
+                            }}>
+                              Status: <span className={recentBooking.status || 'confirmed'}>
+                                {recentBooking.status ? recentBooking.status.charAt(0).toUpperCase() + recentBooking.status.slice(1) : 'Confirmed'}
+                              </span>
+                            </p>
                           </div>
+                          
+                          {/* View Ticket Button */}
+                          <button 
+                            onClick={() => {
+                              openFullScreenTicket(recentBooking);
+                            }}
+                            className="view-ticket-btn"
+                          >
+                            View
+                          </button>
                         </div>
-                      );
-                    })
+                      </div>
+                    );
+                  })()
                 ) : (
                   <div className="no-tickets-container">
-                    <p className="no-tickets-message">No tickets found. Book an event to get started!</p>
+                    <p className="no-tickets-message">No tickets found. Book your slots to get started!</p>
                     <button 
                       className="book-event-btn"
-                      onClick={() => navigate('/events')}
+                      onClick={() => navigate('/plans')}
                     >
-                      Book an Event
+                      Book Your Slots
                     </button>
                   </div>
                 )}

@@ -7,6 +7,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { auth, db } from '../../firebase';
 import Notification from '../Notification/Notification';
 import { formatDate } from '../../utils/dateUtils';
+import PaymentButton from './PaymentButton'; // Import PaymentButton component
 import './Payments.css';
 
 const Payments = () => {
@@ -29,6 +30,19 @@ const Payments = () => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [bookingData, setBookingData] = useState(null);
   const [notification, setNotification] = useState(null);
+  // Add state to detect mobile devices
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile devices
+  useEffect(() => {
+    const mobileCheck = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      const isMobileDevice = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      setIsMobile(isMobileDevice);
+    };
+    
+    mobileCheck();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -199,6 +213,71 @@ const Payments = () => {
     } finally {
       setProcessing(false);
     }
+  };
+
+  // New function to handle successful Razorpay payment
+  const handlePaymentSuccess = async (response) => {
+    console.log('Payment successful:', response);
+    
+    if (!user || !event) return;
+    
+    try {
+      // Create booking after successful payment
+      const bookingsRef = collection(db, 'bookings');
+      const bookingData = {
+        userId: user.uid,
+        eventId: String(event.id),
+        eventName: event.title,
+        eventDate: new Date(event.date),
+        eventTime: event.time,
+        eventLocation: event.location,
+        userName: user.name || user.displayName,
+        userEmail: user.email,
+        phoneNumber: user.phoneNumber,
+        bookingDate: new Date(),
+        status: 'confirmed',
+        isFreeTrial: false, // This is a paid booking
+        amount: 100,
+        paymentMethod: 'razorpay',
+        razorpayPaymentId: response.razorpay_payment_id,
+        razorpayOrderId: response.razorpay_order_id
+      };
+
+      console.log('Creating booking with data:', bookingData);
+      const docRef = await addDoc(bookingsRef, bookingData);
+      
+      // Verify the booking was created
+      const bookingDoc = await getDoc(docRef);
+      if (bookingDoc.exists()) {
+        console.log('Booking verified in database:', bookingDoc.data());
+        const bookingDataWithId = {
+          id: docRef.id,
+          ...bookingDoc.data()
+        };
+        setBookingData(bookingDataWithId);
+        
+        // Store booking data in localStorage
+        const allBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+        allBookings.push(bookingDataWithId);
+        localStorage.setItem('eventBookings', JSON.stringify(allBookings));
+        
+        // Store in a special key to trigger notification
+        localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
+      }
+      
+      setPaymentSuccess(true);
+      showNotification('Payment successful! Your booking is confirmed.', 'success');
+    } catch (error) {
+      console.error('Error creating booking after payment:', error);
+      showNotification('Payment successful but there was an issue creating your booking. Please contact support.', 'error');
+    }
+  };
+
+  // New function to handle failed Razorpay payment
+  const handlePaymentFailure = (error) => {
+    console.error('Payment failed:', error);
+    showNotification(`Payment failed: ${error.message || 'Please try again'}`, 'error');
+    setProcessing(false);
   };
 
   const formatEventDate = (dateString) => {
@@ -375,6 +454,13 @@ const Payments = () => {
             <h2>Booking Successful!</h2>
             <p>Your spot has been confirmed for {event.title}.</p>
             
+            {/* Display mobile-specific message if needed */}
+            {isMobile && (
+              <div className="mobile-notice">
+                <p>📱 For the best experience on mobile, you can download your ticket as PDF below.</p>
+              </div>
+            )}
+            
             {/* Display the ticket immediately after booking */}
             {bookingData && (
               <div className="ticket-display">
@@ -396,7 +482,7 @@ const Payments = () => {
                         isFreeTrial: bookingData.isFreeTrial,
                         status: bookingData.status
                       }))}`}
-                      size={128}
+                      size={isMobile ? 100 : 128}
                       aria-label="Event ticket QR code"
                     />
                   </div>
@@ -503,193 +589,19 @@ const Payments = () => {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handlePayment} className="payment-form">
-                  {/* Payment Method Selection */}
-                  <div className="payment-methods">
-                    <h3>Select Payment Method</h3>
-                    <div className="method-options">
-                      <label className={`method-option ${paymentMethod === 'card' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="card"
-                          checked={paymentMethod === 'card'}
-                          onChange={() => setPaymentMethod('card')}
-                          disabled={!isEligibleForFreeTrial}
-                        />
-                        <span>Credit/Debit Card</span>
-                        {!isEligibleForFreeTrial && <span className="coming-soon-tag">Coming Soon</span>}
-                      </label>
-                      <label className={`method-option ${paymentMethod === 'upi' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="upi"
-                          checked={paymentMethod === 'upi'}
-                          onChange={() => setPaymentMethod('upi')}
-                          disabled={!isEligibleForFreeTrial}
-                        />
-                        <span>UPI</span>
-                        {!isEligibleForFreeTrial && <span className="coming-soon-tag">Coming Soon</span>}
-                      </label>
-                      <label className={`method-option ${paymentMethod === 'netbanking' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="netbanking"
-                          checked={paymentMethod === 'netbanking'}
-                          onChange={() => setPaymentMethod('netbanking')}
-                          disabled={!isEligibleForFreeTrial}
-                        />
-                        <span>Net Banking</span>
-                        {!isEligibleForFreeTrial && <span className="coming-soon-tag">Coming Soon</span>}
-                      </label>
-                    </div>
+                <div className="razorpay-payment-section">
+                  <p>Complete your payment of ₹100 using Razorpay:</p>
+                  <PaymentButton
+                    amount={100}
+                    eventName={event.title}
+                    eventId={String(event.id)}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentFailure={handlePaymentFailure}
+                  />
+                  <div className="payment-security-note">
+                    <p>🔒 Secure payment processing powered by Razorpay</p>
                   </div>
-
-                  {/* Payment Details Form */}
-                  {paymentMethod === 'card' && (
-                    <div className="card-details">
-                      <div className="form-group">
-                        <label htmlFor="cardNumber">Card Number</label>
-                        <input
-                          type="text"
-                          id="cardNumber"
-                          name="cardNumber"
-                          value={paymentDetails.cardNumber}
-                          onChange={handleCardNumberChange}
-                          placeholder="1234 5678 9012 3456"
-                          maxLength="19"
-                          required
-                          aria-label="Card number"
-                        />
-                      </div>
-                      
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label htmlFor="expiryDate">Expiry Date</label>
-                          <input
-                            type="text"
-                            id="expiryDate"
-                            name="expiryDate"
-                            value={paymentDetails.expiryDate}
-                            onChange={handleExpiryChange}
-                            placeholder="MM/YY"
-                            maxLength="5"
-                            required
-                            aria-label="Card expiry date"
-                          />
-                        </div>
-                        
-                        <div className="form-group">
-                          <label htmlFor="cvv">CVV</label>
-                          <input
-                            type="text"
-                            id="cvv"
-                            name="cvv"
-                            value={paymentDetails.cvv}
-                            onChange={handlePaymentDetailsChange}
-                            placeholder="123"
-                            maxLength="4"
-                            required
-                            aria-label="Card CVV"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="name">Name on Card</label>
-                        <input
-                          type="text"
-                          id="name"
-                          name="name"
-                          value={paymentDetails.name}
-                          onChange={handlePaymentDetailsChange}
-                          placeholder="John Doe"
-                          required
-                          aria-label="Name on card"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* UPI Payment */}
-                  {paymentMethod === 'upi' && (
-                    <div className="upi-details">
-                      <div className="form-group">
-                        <label htmlFor="upiId">UPI ID</label>
-                        <input
-                          type="text"
-                          id="upiId"
-                          name="upiId"
-                          value={paymentDetails.upiId}
-                          onChange={handlePaymentDetailsChange}
-                          placeholder="yourname@upi"
-                          required
-                          aria-label="UPI ID"
-                        />
-                      </div>
-                      <p className="upi-instructions">
-                        You will be redirected to your UPI app to complete the payment.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Net Banking */}
-                  {paymentMethod === 'netbanking' && (
-                    <div className="netbanking-details">
-                      <div className="form-group">
-                        <label htmlFor="bank">Select Bank</label>
-                        <select 
-                          id="bank" 
-                          name="bank" 
-                          value={paymentDetails.bank}
-                          onChange={handlePaymentDetailsChange}
-                          required
-                          aria-label="Select bank"
-                        >
-                          <option value="">Select your bank</option>
-                          <option value="sbi">State Bank of India</option>
-                          <option value="hdfc">HDFC Bank</option>
-                          <option value="icici">ICICI Bank</option>
-                          <option value="axis">Axis Bank</option>
-                          <option value="kotak">Kotak Mahindra Bank</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Total Amount */}
-                  <div className="payment-summary">
-                    <div className="summary-row">
-                      <span>Event Fee:</span>
-                      {isEligibleForFreeTrial ? (
-                        <span className="free-amount">₹0 (Free Trial)</span>
-                      ) : (
-                        <span>₹100</span>
-                      )}
-                    </div>
-                    <div className="summary-row total">
-                      <span>Total:</span>
-                      {isEligibleForFreeTrial ? (
-                        <span className="free-amount">₹0</span>
-                      ) : (
-                        <span>₹100</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Pay Now Button */}
-                  <button 
-                    type="submit" 
-                    className="pay-now-btn"
-                    disabled={processing || (!isEligibleForFreeTrial && paymentMethod !== 'free_trial')}
-                  >
-                    {processing ? 'Processing...' : 'Pay ₹100'}
-                  </button>
-                  
-                  {/* Remove the coming soon note */}
-                </form>
+                </div>
               )}
             </div>
           </div>

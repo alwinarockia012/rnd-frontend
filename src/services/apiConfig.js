@@ -17,9 +17,15 @@ const isDevelopment = () => {
 
 // Determine the correct API base URL based on environment
 export const getApiBaseUrl = () => {
-  // In development, use localhost with the correct port (5001)
+  // In development, check if we're on a local network
   if (isDevelopment()) {
-    return 'http://localhost:5001';
+    // If we're accessing from a local network IP, use that IP for the backend
+    if (window.location.hostname.startsWith('192.168.')) {
+      // Use the same IP as the frontend but with backend port
+      return `http://${window.location.hostname}:5003`;
+    }
+    // Otherwise, use localhost for local development
+    return 'http://localhost:5003';
   }
   
   // In production, use the same origin (relative URLs)

@@ -490,316 +490,20 @@
   font-size: 0.9rem;
 }
 
-/* Mobile Responsive Styles */
-@media (max-width: 768px) {
-  .payments-page {
-    padding: 15px;
-  }
-  
-  .payment-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-  
-  .payment-header h1 {
-    font-size: 2rem;
-  }
-  
-  .payment-content {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .event-details-card, .payment-form-card {
-    padding: 20px;
-  }
-  
-  .event-details-card h2, .payment-form-card h2 {
-    font-size: 1.5rem;
-  }
-  
-  .method-options {
-    flex-direction: column;
-  }
-  
-  .method-option {
-    min-width: auto;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-  
-  .pay-now-btn {
-    font-size: 1.1rem;
-    padding: 12px;
-  }
-  
-  .summary-row {
-    font-size: 1rem;
-  }
-  
-  .summary-row.total {
-    font-size: 1.2rem;
-  }
-  
-  .payment-success {
-    padding: 20px 10px;
-  }
-  
-  .success-icon {
-    width: 60px;
-    height: 60px;
-    font-size: 2rem;
-  }
-  
-  .payment-success h2 {
-    font-size: 1.5rem;
-  }
-  
-  .payment-success p {
-    font-size: 1rem;
-  }
-  
-  .ticket-display {
-    padding: 25px;
-    min-height: 250px;
-  }
-  
-  .ticket-content {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-    padding: 20px;
-    min-height: 180px;
-  }
-  
-  .ticket-details {
-    text-align: center;
-    width: 100%;
-  }
-  
-  .ticket-qr {
-    margin-bottom: 25px;
-  }
-  
-  .ticket-qr canvas {
-    width: 80px !important;
-    height: 80px !important;
-  }
-  
-  .ticket-details p {
-    font-size: 0.9rem;
-    margin: 6px 0;
-  }
-  
-  .ticket-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 15px 0;
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: left;
-  }
-  
-  .download-pdf-btn, .view-dashboard-btn {
-    width: 100%;
-    padding: 14px;
-  }
-  
-  .prominent-dashboard-button {
-    width: 100%;
-    text-align: left;
-    margin: 15px 0;
-  }
-  
-  .view-dashboard-btn.prominent {
-    width: 100%;
-    max-width: 100%;
-    padding: 14px;
-    font-size: 1.1rem;
-  }
+/* Add mobile-specific styles */
+.mobile-notice, .mobile-payment-note {
+  background: rgba(241, 90, 36, 0.1);
+  border: 1px solid rgba(241, 90, 36, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  text-align: center;
+  font-size: 0.9rem;
 }
 
-@media (max-width: 480px) {
-  .payments-page {
-    padding: 10px;
-  }
-  
-  .payment-header h1 {
-    font-size: 1.8rem;
-  }
-  
-  .back-btn {
-    padding: 8px 15px;
-    font-size: 0.9rem;
-  }
-  
-  .event-details-card, .payment-form-card {
-    padding: 15px;
-  }
-  
-  .event-info h3 {
-    font-size: 1.3rem;
-  }
-  
-  .event-date, .event-time, .event-location {
-    font-size: 1rem;
-  }
-  
-  .price span {
-    font-size: 1.5rem;
-  }
-  
-  .method-option {
-    padding: 12px;
-  }
-  
-  .method-option span {
-    font-size: 0.9rem;
-  }
-  
-  .form-group input,
-  .form-group select {
-    padding: 10px 12px;
-    font-size: 0.9rem;
-  }
-  
-  .pay-now-btn {
-    font-size: 1rem;
-    padding: 12px;
-  }
-  
-  .payment-summary {
-    padding: 15px;
-  }
-  
-  .summary-row {
-    font-size: 0.9rem;
-  }
-  
-  .summary-row.total {
-    font-size: 1.1rem;
-  }
-  
-  .free-trial-badge span {
-    font-size: 1rem;
-  }
-  
-  .free-trial-badge p {
-    font-size: 0.9rem;
-  }
-  
-  .ticket-display {
-    padding: 20px;
-    min-height: 220px;
-  }
-  
-  .ticket-content {
-    padding: 15px;
-    min-height: 160px;
-  }
-  
-  .ticket-display h3 {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-  }
-  
-  .ticket-details p {
-    font-size: 0.85rem;
-  }
-  
-  .ticket-qr canvas {
-    width: 70px !important;
-    height: 70px !important;
-  }
-  
-  .free-trial-tag {
-    font-size: 0.8rem;
-    padding: 4px 10px;
-  }
-}
-
-/* Extra small devices */
-@media (max-width: 320px) {
-  .payment-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .event-details-card h2, .payment-form-card h2 {
-    font-size: 1.3rem;
-  }
-  
-  .event-info h3 {
-    font-size: 1.1rem;
-  }
-  
-  .pay-now-btn {
-    font-size: 0.9rem;
-  }
-  
-  .ticket-display {
-    padding: 15px;
-    min-height: 200px;
-  }
-  
-  .ticket-content {
-    padding: 12px;
-    min-height: 140px;
-  }
-  
-  .ticket-display h3 {
-    font-size: 1.3rem;
-  }
-  
-  .ticket-details p {
-    font-size: 0.8rem;
-  }
-  
-  .ticket-qr canvas {
-    width: 60px !important;
-    height: 60px !important;
-  }
-  
-  .ticket-actions {
-    align-items: flex-start;
-    gap: 10px;
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: left;
-  }
-  
-  .download-pdf-btn, .view-dashboard-btn {
-    padding: 12px 15px;
-    font-size: 0.9rem;
-    min-width: 140px;
-  }
-  
-  .view-dashboard-btn.prominent {
-    padding: 12px 15px;
-    font-size: 1rem;
-    max-width: 100%;
-  }
-}
-
-/* Add this to the existing CSS file */
-.free-amount {
-  color: #4CAF50;
-  font-weight: bold;
-}
-
-.method-option:has(input:disabled) {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.method-option:has(input:disabled) span {
-  pointer-events: none;
+.mobile-notice p, .mobile-payment-note p {
+  margin: 0;
+  color: #ddd;
 }
 
 /* Ensure the free trial section is still fully functional */
@@ -823,4 +527,196 @@
   font-size: 0.9rem;
   color: #666;
   font-style: italic;
+}
+
+.razorpay-payment-section {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.razorpay-payment-section p {
+  margin-bottom: 20px;
+  color: #ddd;
+  font-size: 1.1rem;
+}
+
+.payment-security-note {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.payment-security-note p {
+  margin: 0;
+  color: #a5d6a7;
+  font-size: 0.9rem;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .payments-page {
+    padding: 10px;
+  }
+  
+  .payment-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .payment-header h1 {
+    font-size: 2rem;
+  }
+  
+  .payment-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .event-details-card, .payment-form-card {
+    padding: 20px;
+    border-radius: 15px;
+  }
+  
+  .event-details-card h2, .payment-form-card h2 {
+    font-size: 1.5rem;
+  }
+  
+  .method-options {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .method-option {
+    min-width: auto;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .ticket-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .ticket-qr {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .ticket-details {
+    text-align: center;
+  }
+  
+  .ticket-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .ticket-actions button {
+    width: 100%;
+  }
+  
+  .prominent-dashboard-button .view-dashboard-btn.prominent {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+  }
+  
+  .mobile-notice, .mobile-payment-note {
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+  
+  .razorpay-payment-section {
+    padding: 15px 0;
+  }
+  
+  .razorpay-payment-section p {
+    font-size: 1rem;
+  }
+  
+  .payment-security-note {
+    padding: 12px;
+    margin-top: 15px;
+  }
+  
+  .payment-security-note p {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .payments-container {
+    padding: 5px;
+  }
+  
+  .payment-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .back-btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+  
+  .event-details-card, .payment-form-card {
+    padding: 15px;
+  }
+  
+  .event-details-card h2, .payment-form-card h2 {
+    font-size: 1.3rem;
+  }
+  
+  .event-info h3 {
+    font-size: 1.2rem;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .pay-now-btn {
+    padding: 12px;
+    font-size: 1rem;
+  }
+  
+  .success-icon {
+    font-size: 3rem;
+    width: 80px;
+    height: 80px;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  .mobile-notice, .mobile-payment-note {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+  
+  .razorpay-payment-section {
+    padding: 10px 0;
+  }
+  
+  .razorpay-payment-section p {
+    font-size: 0.9rem;
+  }
+  
+  .payment-security-note {
+    padding: 10px;
+    margin-top: 10px;
+  }
+  
+  .payment-security-note p {
+    font-size: 0.8rem;
+  }
 }

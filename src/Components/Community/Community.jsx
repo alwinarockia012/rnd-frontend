@@ -125,7 +125,6 @@ const Community = () => {
       });
       
       // Calculate stats for each user
-      const usersWithStats = [];
       const promises = usersData.map(async (user) => {
         const stats = await calculateUserStats(user.id);
         return {
@@ -135,16 +134,16 @@ const Community = () => {
         };
       });
       
-      Promise.all(promises).then((usersWithStats) => {
+      Promise.all(promises).then((usersWithCalculatedStats) => {
         // Sort users by total distance (descending), then by total runs (descending)
-        usersWithStats.sort((a, b) => {
+        usersWithCalculatedStats.sort((a, b) => {
           if (b.totalDistance !== a.totalDistance) {
             return b.totalDistance - a.totalDistance;
           }
           return b.totalRuns - a.totalRuns;
         });
         
-        setRankedUsers(usersWithStats);
+        setRankedUsers(usersWithCalculatedStats);
       });
     }, (error) => {
       console.error('Error fetching users:', error);
@@ -170,7 +169,6 @@ const Community = () => {
         });
         
         // Calculate stats for each user
-        const usersWithStats = [];
         const promises = usersData.map(async (user) => {
           const stats = await calculateUserStats(user.id);
           return {
@@ -180,16 +178,16 @@ const Community = () => {
           };
         });
         
-        Promise.all(promises).then((usersWithStats) => {
+        Promise.all(promises).then((usersWithCalculatedStats) => {
           // Sort users by total distance (descending), then by total runs (descending)
-          usersWithStats.sort((a, b) => {
+          usersWithCalculatedStats.sort((a, b) => {
             if (b.totalDistance !== a.totalDistance) {
               return b.totalDistance - a.totalDistance;
             }
             return b.totalRuns - a.totalRuns;
           });
           
-          setRankedUsers(usersWithStats);
+          setRankedUsers(usersWithCalculatedStats);
         });
       });
     }, (error) => {
