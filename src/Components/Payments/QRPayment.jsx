@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FaQrcode, FaSpinner, FaInfoCircle } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaQrcode, FaSpinner, FaInfoCircle, FaRedo } from 'react-icons/fa';
 import { QRCodeCanvas } from 'qrcode.react';
 import { getCurrentUser, formatAmountForRazorpay, validatePaymentData } from '../../services/paymentService';
 import { getApiUrl } from '../../services/apiConfig';
@@ -10,12 +10,21 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
   const [qrData, setQrData] = useState(null);
   const [showQR, setShowQR] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [pollingInterval, setPollingInterval] = useState(null);
+
+  // Cleanup polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
 
   const generateQRPayment = async () => {
     // Validate payment data
     const validation = validatePaymentData({ amount, eventName, eventId });
     if (!validation.isValid) {
-      // Use onPaymentFailure to handle this error which will show notification in parent
       if (onPaymentFailure) {
         onPaymentFailure(new Error(validation.error));
       }
@@ -49,13 +58,14 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
       });
 
       if (!response.ok) {
-        throw new Error(`Server error: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
       }
 
       const order = await response.json();
 
       if (!order.qrCode || !order.shortUrl) {
-        throw new Error('QR code generation failed');
+        throw new Error('QR code generation failed - Missing QR code or short URL');
       }
 
       // Set QR data for display
@@ -73,9 +83,8 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
       pollPaymentStatus(order.id);
     } catch (error) {
       console.error('Error generating QR code:', error);
-      // Use onPaymentFailure to handle this error which will show notification in parent
       if (onPaymentFailure) {
-        onPaymentFailure(error);
+        onPaymentFailure(new Error(`Failed to generate QR code: ${error.message}`));
       }
     } finally {
       setLoading(false);
@@ -84,35 +93,49 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
 
   // Poll for payment status
   const pollPaymentStatus = async (orderId) => {
-    const pollInterval = setInterval(async () => {
+    // Clear any existing interval
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+    
+    const interval = setInterval(async () => {
       try {
         const response = await fetch(getApiUrl(`/api/check-payment-status/${orderId}`));
         if (response.ok) {
           const result = await response.json();
+          console.log('Payment status check result:', result);
+          
           if (result.status === 'paid') {
-            clearInterval(pollInterval);
+            clearInterval(interval);
+            setPollingInterval(null);
             setPaymentStatus('success');
             // Use onPaymentSuccess which will show notification in parent
             if (onPaymentSuccess) {
               onPaymentSuccess({ razorpay_order_id: orderId });
             }
           } else if (result.status === 'failed') {
-            clearInterval(pollInterval);
+            clearInterval(interval);
+            setPollingInterval(null);
             setPaymentStatus('failed');
             // Use onPaymentFailure to handle this error which will show notification in parent
             if (onPaymentFailure) {
-              onPaymentFailure(new Error('Payment failed'));
+              onPaymentFailure(new Error('Payment failed. Please try again.'));
             }
           }
+        } else {
+          console.error('Failed to check payment status:', response.status);
         }
       } catch (error) {
         console.error('Error checking payment status:', error);
       }
     }, 5000); // Check every 5 seconds
 
+    setPollingInterval(interval);
+
     // Stop polling after 10 minutes
     setTimeout(() => {
-      clearInterval(pollInterval);
+      clearInterval(interval);
+      setPollingInterval(null);
       if (paymentStatus !== 'success') {
         setPaymentStatus('timeout');
         // Use onPaymentFailure to handle timeout which will show notification in parent
@@ -124,10 +147,32 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
   };
 
   const handleRetry = () => {
+    // Clear previous state
     setShowQR(false);
     setQrData(null);
     setPaymentStatus(null);
+    
+    // Clear polling interval if exists
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    
+    // Generate new QR code
     generateQRPayment();
+  };
+
+  const handleClose = () => {
+    // Clear polling interval if exists
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    
+    // Reset state
+    setShowQR(false);
+    setQrData(null);
+    setPaymentStatus(null);
   };
 
   return (
@@ -146,7 +191,7 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
           ) : (
             <div className="button-content">
               <FaQrcode className="qr-icon" />
-              <span>Pay with QR Code</span>
+              <span>Pay with UPI</span>
             </div>
           )}
         </button>
@@ -159,6 +204,7 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
               size={200} 
               level="H"
               includeMargin={true}
+              className="qr-code-canvas"
             />
           </div>
           <div className="qr-instructions">
@@ -171,24 +217,25 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
           
           {paymentStatus === 'success' && (
             <div className="payment-status success">
-              <p>Payment Successful!</p>
+              <p>✅ Payment Successful!</p>
+              <p className="small">You will be redirected shortly...</p>
             </div>
           )}
           
           {paymentStatus === 'failed' && (
             <div className="payment-status failed">
-              <p>Payment Failed</p>
+              <p>❌ Payment Failed</p>
               <button onClick={handleRetry} className="retry-button">
-                Retry Payment
+                <FaRedo /> Retry Payment
               </button>
             </div>
           )}
           
           {paymentStatus === 'timeout' && (
             <div className="payment-status timeout">
-              <p>Payment Timeout</p>
+              <p>⏰ Payment Timeout</p>
               <button onClick={handleRetry} className="retry-button">
-                Retry Payment
+                <FaRedo /> Retry Payment
               </button>
             </div>
           )}
@@ -196,14 +243,14 @@ const QRPayment = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFail
           {!paymentStatus && (
             <div className="payment-status pending">
               <FaSpinner className="spinner-icon" />
-              <p>Waiting for payment confirmation...</p>
+              <p>⏳ Waiting for payment confirmation...</p>
               <p className="small">This may take a few moments</p>
             </div>
           )}
           
           <div className="qr-actions">
             <button 
-              onClick={() => setShowQR(false)} 
+              onClick={handleClose} 
               className="secondary-button"
             >
               Back to Payment Methods

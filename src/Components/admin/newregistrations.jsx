@@ -209,6 +209,42 @@ const NewRegistrations = () => {
     }
   };
 
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Format payment method for display
+  const formatPaymentMethod = (method) => {
+    if (!method) return 'Razorpay';
+    
+    // Map common payment methods to user-friendly names
+    const methodMap = {
+      'card': 'Card',
+      'credit_card': 'Credit Card',
+      'debit_card': 'Debit Card',
+      'creditcard': 'Credit Card',
+      'debitcard': 'Debit Card',
+      'upi': 'UPI',
+      'netbanking': 'Internet Banking',
+      'net_banking': 'Internet Banking',
+      'wallet': 'Wallet',
+      'emi': 'EMI',
+      'cod': 'Cash on Delivery',
+      'free_trial': 'Free Trial',
+      'razorpay': 'Razorpay'
+    };
+    
+    // Return mapped name or capitalize the method name
+    return methodMap[method.toLowerCase()] || 
+           method.charAt(0).toUpperCase() + method.slice(1).replace(/_/g, ' ');
+  };
+
   if (loading) {
     return (
       <div className="new-registrations">
@@ -479,13 +515,13 @@ const NewRegistrations = () => {
                             <div className="detail-row">
                               <span className="detail-label">Amount:</span>
                               <span className="detail-value">
-                                ₹{typeof booking.amount === 'number' ? booking.amount.toFixed(2) : (booking.amount || 0)}
+                                {formatCurrency(typeof booking.amount === 'number' ? booking.amount : (booking.amount || 0))}
                               </span>
                             </div>
                             <div className="detail-row">
                               <span className="detail-label">Payment Method:</span>
                               <span className="detail-value">
-                                {booking.paymentMethod || (booking.isFreeTrial ? 'Free Trial' : 'N/A')}
+                                {formatPaymentMethod(booking.paymentMethod) || (booking.isFreeTrial ? 'Free Trial' : 'N/A')}
                               </span>
                             </div>
                             <div className="detail-row">

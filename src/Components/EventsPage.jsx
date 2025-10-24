@@ -3,29 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import firebaseService from '../services/firebaseService';
+import { formatDate } from '../utils/dateUtils';
 import './EventsPage.css';
-
-// Placeholder for upcoming events - in a real app, this would come from Firestore
-const upcomingEvents = [
-  {
-    id: 'event_001',
-    title: 'Weekly Community Run',
-    date: '2025-10-12T07:00:00',
-    time: '07:00 AM',
-    location: 'C3 Cafe, City Park',
-    description: 'Join fellow runners for an unforgettable experience.',
-    image: '/upcoming-events.jpeg',
-    status: 'Open for Registration',
-    participants: 25,
-    maxParticipants: 50,
-    detailedDescription: 'Experience the ultimate running challenge as we welcome 2025! This event combines fitness, community, and celebration. The route takes you through the most scenic parts of Trichy, including heritage sites and modern landmarks. Whether you\'re a seasoned marathoner or a beginner, this event offers multiple distance options: 5K Fun Run, 10K Challenge, and Full Marathon (42K). Pre-event warm-up sessions, professional timing, medical support, hydration stations every 2K, post-race celebrations with live music, healthy refreshments, and awards ceremony. Special goody bags for all participants including event t-shirt, medal, and local sponsor gifts.',
-    requirements: [
-      'Comfortable running gear and shoes',
-      'Water bottle (additional hydration provided)',
-      'Valid ID for registration verification'
-    ],
-  }
-];
 
 function EventsPage() {
   const navigate = useNavigate();
@@ -33,6 +13,9 @@ function EventsPage() {
   const [userBookings, setUserBookings] = useState([]);
   const [isEventExpanded, setIsEventExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [mainEvent, setMainEvent] = useState(null); // Main event from Firebase
+  const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(Date.now()); // Add refresh tracking
 
   // Check if it's a mobile device
   useEffect(() => {
@@ -49,6 +32,139 @@ function EventsPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Fetch main upcoming event from Firebase
+  const fetchMainEvent = async () => {
+    try {
+      // Get the "Weekly Community Run" event from upcomingEvents
+      const events = await firebaseService.getUpcomingEvents();
+      const weeklyCommunityRun = events.find(event => 
+        event.name && event.name.includes('Weekly Community Run')
+      );
+      
+      if (weeklyCommunityRun) {
+        // Ensure the event ID is properly set as a string
+        const eventWithProperId = {
+          ...weeklyCommunityRun,
+          id: String(weeklyCommunityRun.id)
+        };
+        setMainEvent(eventWithProperId);
+      } else {
+        // Fallback to default event if not found
+        setMainEvent({
+          id: 'event_001',
+          name: 'Weekly Community Run',
+          date: new Date().toISOString().split('T')[0],
+          time: '07:00 AM',
+          location: 'C3 Cafe, City Park',
+          description: 'Join fellow runners for an unforgettable experience.',
+          image: '/upcoming-events.jpeg',
+          status: 'Open for Registration',
+          participants: 25,
+          maxParticipants: 50
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching main event:', error);
+      // Fallback to default event on error
+      setMainEvent({
+        id: 'event_001',
+        name: 'Weekly Community Run',
+        date: new Date().toISOString().split('T')[0],
+        time: '07:00 AM',
+        location: 'C3 Cafe, City Park',
+        description: 'Join fellow runners for an unforgettable experience.',
+        image: '/upcoming-events.jpeg',
+        status: 'Open for Registration',
+        participants: 25,
+        maxParticipants: 50
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMainEvent();
+  }, [lastRefresh]); // Add lastRefresh as dependency
+
+  // Check for refresh flag
+  useEffect(() => {
+    const checkForRefresh = () => {
+      // Check for refresh flag
+      const shouldRefresh = localStorage.getItem('refreshBookings');
+      if (shouldRefresh === 'true') {
+        // Clear the refresh flag
+        localStorage.removeItem('refreshBookings');
+        // Refresh user bookings
+        if (user && user.uid) {
+          fetchUserBookings(user.uid);
+        }
+        // Also refresh the main event
+        setLastRefresh(Date.now());
+      }
+      
+      // Check for new booking flag (set after successful payment)
+      const newBooking = localStorage.getItem('newBooking');
+      if (newBooking) {
+        // Clear the new booking flag
+        localStorage.removeItem('newBooking');
+        // Refresh user bookings
+        if (user && user.uid) {
+          fetchUserBookings(user.uid);
+        }
+        // Also refresh the main event
+        setLastRefresh(Date.now());
+      }
+      
+      // Check for event updates flag (set when events are updated in admin)
+      const eventsUpdated = localStorage.getItem('eventsUpdated');
+      if (eventsUpdated === 'true') {
+        // Clear the events updated flag
+        localStorage.removeItem('eventsUpdated');
+        // Refresh the main event
+        setLastRefresh(Date.now());
+      }
+      
+      // Check for latest event booking (new approach)
+      const latestEventBooking = localStorage.getItem('latestEventBooking');
+      if (latestEventBooking) {
+        // Refresh user bookings
+        if (user && user.uid) {
+          fetchUserBookings(user.uid);
+        }
+        // Also refresh the main event
+        setLastRefresh(Date.now());
+      }
+    };
+
+    // Check immediately when component mounts
+    checkForRefresh();
+
+    // Check periodically (every 500ms) for faster updates
+    const interval = setInterval(checkForRefresh, 500);
+    
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Add auto-refresh when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible, refresh bookings
+        if (user && user.uid) {
+          fetchUserBookings(user.uid);
+        }
+        // Also refresh the main event
+        setLastRefresh(Date.now());
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
 
   // Auth State Listener and User Data Fetch
   useEffect(() => {
@@ -90,18 +206,128 @@ function EventsPage() {
       }));
       setUserBookings(bookings);
       localStorage.setItem(`userBookings_${userId}`, JSON.stringify(bookings));
+      console.log('Fetched user bookings:', bookings);
+      
+      // Also update the global eventBookings for consistency
+      localStorage.setItem('eventBookings', JSON.stringify(bookings));
     } catch (error) {
       console.error('Error fetching user bookings:', error);
       const cachedBookings = localStorage.getItem(`userBookings_${userId}`);
       if (cachedBookings) {
-        setUserBookings(JSON.parse(cachedBookings));
+        const parsedBookings = JSON.parse(cachedBookings);
+        setUserBookings(parsedBookings);
+        console.log('Using cached user bookings:', parsedBookings);
       }
     }
   };
 
-  // Check if a user has already booked a specific event
+  // Check if a user has already booked a specific event - ENHANCED VERSION WITH TODAY'S BOOKING CHECK
   const hasUserBookedEvent = (eventId) => {
-    return userBookings.some(booking => String(booking.eventId) === String(eventId));
+    // Make sure we have user bookings data
+    if (!userBookings || userBookings.length === 0) {
+      console.log('No user bookings found');
+      return false;
+    }
+    
+    // Convert eventId to string for comparison
+    const targetEventId = String(eventId);
+    console.log('Checking if user booked event:', targetEventId);
+    console.log('User bookings data:', userBookings);
+    
+    // Get today's date for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Enhanced approach - check if any booking has this event ID
+    for (const booking of userBookings) {
+      // Check multiple possible field names and ensure consistent string comparison
+      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
+      if (bookingEventId !== undefined && bookingEventId !== null) {
+        const bookingEventIdStr = String(bookingEventId);
+        console.log('Comparing with booking event ID:', bookingEventIdStr);
+        // Use multiple comparison methods for better compatibility
+        if (bookingEventIdStr === targetEventId || 
+            bookingEventIdStr == targetEventId ||
+            bookingEventIdStr.trim() === targetEventId.trim()) {
+          
+          // Check if this booking was made today
+          const bookingDate = booking.bookingDate || booking.createdAt;
+          if (bookingDate) {
+            let bookingTime;
+            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+              bookingTime = bookingDate.toDate();
+            } else if (bookingDate instanceof Date) {
+              bookingTime = bookingDate;
+            } else {
+              bookingTime = new Date(bookingDate);
+            }
+            
+            // Set time to beginning of day for comparison
+            bookingTime.setHours(0, 0, 0, 0);
+            
+            // If booking was made today, return true
+            if (bookingTime.getTime() === today.getTime()) {
+              console.log('MATCH FOUND FOR TODAY!');
+              return true;
+            }
+          }
+          
+          // For backward compatibility, return true for any match
+          console.log('MATCH FOUND!');
+          return true;
+        }
+      }
+    }
+    
+    console.log('No match found for event ID:', targetEventId);
+    return false;
+  };
+
+  // New function to check if user booked today (regardless of event)
+  const hasUserBookedToday = (eventId) => {
+    if (!userBookings || userBookings.length === 0) {
+      return false;
+    }
+
+    const targetEventId = String(eventId);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Check if any booking was made today
+    return userBookings.some(booking => {
+      // First check if the booking is for the target event
+      let isTargetEvent = false;
+      
+      // Check multiple possible field names
+      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
+      if (bookingEventId) {
+        isTargetEvent = String(bookingEventId) === targetEventId;
+      }
+      
+      // If this booking is not for the target event, skip it
+      if (!isTargetEvent) {
+        return false;
+      }
+      
+      // Now check if the booking was made today
+      const bookingDate = booking.bookingDate || booking.createdAt;
+      if (bookingDate) {
+        let bookingTime;
+        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+          bookingTime = bookingDate.toDate();
+        } else if (bookingDate instanceof Date) {
+          bookingTime = bookingDate;
+        } else {
+          bookingTime = new Date(bookingDate);
+        }
+        
+        bookingTime.setHours(0, 0, 0, 0);
+        
+        return bookingTime.getTime() === today.getTime();
+      }
+      
+      return false;
+    });
   };
 
   // Handle Registration Click
@@ -117,6 +343,10 @@ function EventsPage() {
       return;
     }
 
+    // Pass the event information to the plans page
+    // We'll store the event in localStorage so the plans page can access it
+    localStorage.setItem('selectedEvent', JSON.stringify(event));
+    
     // Instead of checking eligibility and navigating to payments, 
     // we'll navigate directly to the plans page
     navigate('/plans');
@@ -138,6 +368,17 @@ function EventsPage() {
     return (participants / maxParticipants) * 100;
   };
 
+  if (loading) {
+    return (
+      <div className="events-page">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading events...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="events-page">
       <div className="upcoming-events-section">
@@ -147,7 +388,7 @@ function EventsPage() {
         </div>
 
         <div className="upcoming-events-container">
-          {upcomingEvents.length > 0 ? (
+          {mainEvent ? (
             <div
               className={`event-card ${isEventExpanded ? 'expanded' : ''}`}
               onMouseEnter={() => !isMobile && setIsEventExpanded(true)}
@@ -156,28 +397,26 @@ function EventsPage() {
             >
               <div className="event-image-wrapper">
                 <img
-                  src={upcomingEvents[0].image}
-                  alt={upcomingEvents[0].title}
+                  src={mainEvent.image || '/upcoming-events.jpeg'}
+                  alt={mainEvent.name}
                   loading="lazy"
+                  onError={(e) => {
+                    e.target.src = '/upcoming-events.jpeg';
+                  }}
                 />
               </div>
 
               <div className="event-content">
                 <div className="event-main-info">
-                  <h3>{upcomingEvents[0].title}</h3>
+                  <h3>{mainEvent.name}</h3>
                   <div className="event-meta">
                     <div className="event-date">
-                      {new Date(upcomingEvents[0].date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      {formatDate(mainEvent.date)}
                     </div>
-                    <div className="event-time">{upcomingEvents[0].time}</div>
+                    <div className="event-time">{mainEvent.time}</div>
                   </div>
-                  <div className="event-location">{upcomingEvents[0].location}</div>
-                  <div className="event-description">{upcomingEvents[0].description}</div>
+                  <div className="event-location">{mainEvent.location || 'Location TBD'}</div>
+                  <div className="event-description">{mainEvent.description || 'Event description coming soon.'}</div>
                 </div>
 
                 <div className="event-stats">
@@ -186,16 +425,16 @@ function EventsPage() {
                     <div className="progress-container">
                       <div 
                         className="progress-fill" 
-                        style={{ width: `${getProgressPercentage(upcomingEvents[0].participants, upcomingEvents[0].maxParticipants)}%` }}
+                        style={{ width: `${getProgressPercentage(mainEvent.participants || 0, mainEvent.maxParticipants || 50)}%` }}
                       ></div>
                     </div>
                     <div className="progress-text">
-                      {upcomingEvents[0].participants} of {upcomingEvents[0].maxParticipants} spots filled
+                      {mainEvent.participants || 0} of {mainEvent.maxParticipants || 50} spots filled
                     </div>
                     <div className="progress-bar">
                       <div 
                         className="progress-fill" 
-                        style={{ width: `${(upcomingEvents[0].participants / upcomingEvents[0].maxParticipants) * 100}%` }}
+                        style={{ width: `${(mainEvent.participants || 0 / mainEvent.maxParticipants || 50) * 100}%` }}
                       ></div>
                     </div>
                   </div>
@@ -205,11 +444,11 @@ function EventsPage() {
                   className="book-slot-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleRegister(upcomingEvents[0]);
+                    handleRegister(mainEvent);
                   }}
-                  disabled={hasUserBookedEvent(upcomingEvents[0].id)}
                 >
-                  {hasUserBookedEvent(upcomingEvents[0].id) ? 'Already Booked' : 'Book Your Slot Now'}
+                  {hasUserBookedToday(mainEvent.id) ? 'Already Booked Today' : 
+                   hasUserBookedEvent(mainEvent.id) ? 'Already Booked' : 'Book Your Slot Now'}
                 </button>
 
                 {/* Mobile toggle indicator */}

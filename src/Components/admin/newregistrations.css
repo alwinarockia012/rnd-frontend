@@ -232,8 +232,16 @@
 }
 
 .view {
-  background: #9b59b6;
+  background: linear-gradient(135deg, #F15A24, #e05320);
   color: white;
+  border: none;
+  box-shadow: 0 4px 6px rgba(241, 90, 36, 0.3);
+}
+
+.view:hover {
+  background: linear-gradient(135deg, #e05320, #F15A24);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(241, 90, 36, 0.4);
 }
 
 .empty-state {

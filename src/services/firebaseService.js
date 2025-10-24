@@ -622,6 +622,32 @@ class FirebaseService {
     }
   }
 
+  // Main Event Management
+  async getMainEvent() {
+    try {
+      const docRef = doc(db, 'config', 'mainEvent');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting main event:', error);
+      return null;
+    }
+  }
+
+  async updateMainEvent(eventData) {
+    try {
+      const docRef = doc(db, 'config', 'mainEvent');
+      await setDoc(docRef, eventData, { merge: true });
+      return { success: true, message: 'Main event updated successfully' };
+    } catch (error) {
+      console.error('Error updating main event:', error);
+      throw new Error('Failed to update main event: ' + error.message);
+    }
+  }
+
   // Image Upload
   async uploadImage(imageFile, folder) {
     try {

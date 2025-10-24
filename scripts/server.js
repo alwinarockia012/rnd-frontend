@@ -5,6 +5,21 @@ const cors = require('cors');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
+// Initialize Firebase Admin SDK
+let admin;
+try {
+  const serviceAccount = require('./firebase-service-account.json');
+  admin = require('firebase-admin');
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+  console.log('✅ Firebase Admin SDK initialized successfully');
+} catch (error) {
+  console.warn('⚠️ Firebase Admin SDK not initialized:', error.message);
+  console.warn('Booking creation from webhooks will use frontend method instead');
+  admin = null;
+}
+
 // Log environment variables for debugging
 console.log('Current working directory:', process.cwd());
 console.log('Script directory:', __dirname);
@@ -46,7 +61,7 @@ app.use(cors({
   credentials: true,
   optionsSuccessStatus: 200
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Determine mode (test or live)
 const razorpayMode = process.env.RAZORPAY_MODE || 'test';
@@ -198,7 +213,7 @@ app.post('/api/create-qr-order', async (req, res) => {
     const { amount, currency, eventId, userId, eventName, customerName, customerEmail, customerPhone } = req.body;
 
     // Log incoming request for debugging
-    console.log('Received QR order request:', { amount, currency, eventId, userId, eventName });
+    console.log('Received QR order request:', { amount, currency, eventId, userId, eventName, customerName, customerEmail, customerPhone });
 
     // Validate request
     if (!amount || !currency || !eventId || !userId) {
@@ -404,12 +419,14 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), (req, res) => 
         const payment = event.payload.payment.entity;
         const userId = payment.notes && payment.notes.userId;
         const eventName = payment.notes && payment.notes.eventName;
+        const eventId = payment.notes && payment.notes.eventId;
         
         if (userId && eventName) {
           console.log(`Creating booking for user ${userId} for event ${eventName}`);
+          
           // In a real implementation, you would create a booking in the database here
-          // For now, we'll just log it
-          console.log('Booking would be created here in a full implementation');
+          // Let's implement the actual booking creation
+          createBookingFromPayment(userId, eventName, eventId, payment);
         }
         break;
         
@@ -435,6 +452,45 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), (req, res) => 
   }
 });
 
+// Function to create booking from payment webhook
+async function createBookingFromPayment(userId, eventName, eventId, payment) {
+  try {
+    // Check if Firebase Admin is available
+    if (!admin) {
+      console.warn('Firebase Admin SDK not available, booking creation skipped');
+      return null;
+    }
+    
+    const db = admin.firestore();
+    
+    // Create booking data
+    const bookingData = {
+      userId: userId,
+      eventName: eventName,
+      eventId: eventId,
+      eventDate: new Date(), // You might want to set a specific date
+      status: 'confirmed',
+      amount: payment.amount / 100, // Convert from paise to rupees
+      paymentId: payment.id,
+      mode: 'razorpay',
+      bookingDate: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    
+    // Add booking to Firestore
+    const bookingRef = await db.collection('bookings').add(bookingData);
+    
+    console.log(`Booking created successfully with ID: ${bookingRef.id}`);
+    
+    // Optionally, you could also update user statistics or send notifications here
+    return bookingRef.id;
+  } catch (error) {
+    console.error('Error creating booking from payment:', error);
+    throw error;
+  }
+}
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   console.log('Health check requested');
@@ -456,6 +512,66 @@ app.get('/api/test-keys', (req, res) => {
     keyId: razorpayKeyId ? razorpayKeyId.substring(0, 10) + '...' : null,
     razorpayInitialized: !!razorpay
   });
+});
+
+// Route to fetch payment details from Razorpay
+app.get('/api/payment-details/:paymentId', async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    
+    // Check if Razorpay is properly initialized
+    if (!razorpay) {
+      return res.status(500).json({
+        error: 'Payment service not available',
+        message: 'Razorpay service is not properly configured.'
+      });
+    }
+
+    // Fetch payment details from Razorpay
+    const payment = await razorpay.payments.fetch(paymentId);
+    
+    // Extract relevant payment method information
+    const paymentMethodDetails = {
+      method: payment.method || 'unknown',
+      issuer: payment.issuer || null,
+      card: payment.card ? {
+        network: payment.card.network || null,
+        type: payment.card.type || null,
+        issuer: payment.card.issuer || null
+      } : null,
+      bank: payment.bank || null,
+      wallet: payment.wallet || null,
+      vpa: payment.vpa || null
+    };
+    
+    res.json({
+      paymentMethodDetails,
+      amount: payment.amount,
+      currency: payment.currency,
+      status: payment.status
+    });
+  } catch (error) {
+    console.error('Error fetching payment details:', error);
+    
+    if (error.statusCode === 404) {
+      return res.status(404).json({
+        error: 'Payment not found',
+        message: 'The specified payment could not be found.',
+        statusCode: 404
+      });
+    } else if (error.statusCode === 401) {
+      return res.status(401).json({
+        error: 'Authentication failed',
+        message: 'Invalid Razorpay credentials.',
+        statusCode: 401
+      });
+    } else {
+      return res.status(500).json({
+        error: 'Failed to fetch payment details',
+        message: error.message || 'An unexpected error occurred while fetching payment details.',
+      });
+    }
+  }
 });
 
 // Update the 404 handler
@@ -484,7 +600,7 @@ const PORT = process.env.BACKEND_PORT || process.env.PORT || 5001;
 console.log('  Using port:', PORT);
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Razorpay backend server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Mode: ${razorpayMode.toUpperCase()}`);
@@ -495,6 +611,15 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('\n⚠️  WARNING: You are using placeholder Razorpay keys!');
     console.log('Please update your .env file with real Razorpay test keys from https://dashboard.razorpay.com/');
   }
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('Shutting down server...');
+  server.close(() => {
+    console.log('Server closed.');
+    process.exit(0);
+  });
 });
 
 module.exports = app;

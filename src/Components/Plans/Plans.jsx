@@ -234,26 +234,81 @@ const Plans = () => {
     try {
       const user = getCurrentUser();
       if (user && selectedPlan) {
+        // Get the selected event from localStorage if it exists
+        const selectedEventStr = localStorage.getItem('selectedEvent');
+        let eventInfo = null;
+        if (selectedEventStr) {
+          try {
+            eventInfo = JSON.parse(selectedEventStr);
+          } catch (e) {
+            console.error('Error parsing selected event:', e);
+          }
+        }
+        
+        // Prepare booking data - USE ACTUAL EVENT ID IF AVAILABLE
         const bookingData = {
-          eventName: selectedPlan.name,
-          eventDate: new Date(), // In a real implementation, you might want to set a specific date
+          eventName: eventInfo ? eventInfo.name || eventInfo.title : selectedPlan.name,
+          eventId: eventInfo ? String(eventInfo.id) : `plan_${selectedPlan.name.toLowerCase().replace(/\s+/g, '_')}`,
+          eventDate: eventInfo ? new Date(eventInfo.date) : new Date(),
+          eventTime: eventInfo ? eventInfo.time : '',
+          eventLocation: eventInfo ? eventInfo.location : '',
           status: 'confirmed',
           amount: selectedPlan.price,
           paymentId: response.razorpay_payment_id || response.razorpay_order_id,
-          mode: 'razorpay'
+          mode: 'razorpay',
+          userId: user.uid,
+          userEmail: user.email,
+          userName: user.name,
+          phoneNumber: user.phoneNumber,
+          bookingDate: new Date()
         };
         
-        await firebaseService.createBooking(user.uid, bookingData);
-        console.log('Booking created successfully');
+        // Create the booking in Firestore
+        const result = await firebaseService.createBooking(user.uid, bookingData);
+        console.log('Booking created successfully with ID:', result.bookingId);
+        
+        // Add the booking ID to the booking data for storage
+        const bookingDataWithId = {
+          ...bookingData,
+          id: result.bookingId
+        };
+        
+        // Clear the selected event from localStorage
+        localStorage.removeItem('selectedEvent');
+        
+        // Set flags in localStorage to indicate that bookings should be refreshed
+        localStorage.setItem('refreshBookings', 'true');
+        localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
+        localStorage.setItem('eventsUpdated', 'true');
+        
+        // Store booking data for ticket display
+        localStorage.setItem('latestBooking', JSON.stringify(bookingDataWithId));
+        
+        // Store in a global key that both pages will check
+        localStorage.setItem('latestEventBooking', JSON.stringify({
+          eventId: bookingData.eventId,
+          bookingId: result.bookingId,
+          timestamp: Date.now()
+        }));
+        
+        // Force immediate refresh by directly updating localStorage values
+        localStorage.setItem('forceRefresh', 'true');
       }
     } catch (error) {
       console.error('Error creating booking:', error);
       // Even if booking creation fails, we still want to show success message
     }
     
-    // Show success notification using in-app notification
+    // Close the payment modal and show success notification
+    closeModal();
     showNotification('Payment successful! Thank you for your purchase.', 'success');
-    // Here you would typically redirect to a success page or update the UI
+    
+    // Redirect to dashboard where user can see their ticket
+    setTimeout(() => {
+      // Use window.location instead of navigate to ensure full page refresh
+      window.location.href = '/dashboard';
+    }, 1500);
+
   };
 
   // Handle failed payment

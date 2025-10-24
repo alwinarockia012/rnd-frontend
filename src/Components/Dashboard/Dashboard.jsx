@@ -26,6 +26,27 @@ const Dashboard = () => {
   // State for full-screen ticket view
   const [fullScreenTicket, setFullScreenTicket] = useState(null);
 
+  // Add state for new booking notification
+  const [showNewBookingNotification, setShowNewBookingNotification] = useState(false);
+  const [latestBooking, setLatestBooking] = useState(null);
+
+  // Check for new bookings when component mounts
+  useEffect(() => {
+    const latestBookingData = localStorage.getItem('latestBooking');
+    if (latestBookingData) {
+      try {
+        const booking = JSON.parse(latestBookingData);
+        setLatestBooking(booking);
+        setShowNewBookingNotification(true);
+        
+        // Clear the flag after showing notification
+        localStorage.removeItem('latestBooking');
+      } catch (error) {
+        console.error('Error parsing latest booking data:', error);
+      }
+    }
+  }, []);
+
   // Debug useEffect to see when bookings change
   useEffect(() => {
     // Removed console logs to prevent warnings
@@ -382,6 +403,35 @@ Thank you for booking with R&D - Run and Develop!
     <div className="dashboard">
       <DashboardNav />
       <TicketNotification bookings={bookings} onDismiss={() => {}} />
+      {showNewBookingNotification && latestBooking && (
+        <div className="new-booking-notification">
+          <div className="notification-content">
+            <FaTicketAlt className="notification-icon" />
+            <div className="notification-text">
+              <h4>Booking Confirmed!</h4>
+              <p>You have successfully booked {latestBooking.eventName || 'an event'}</p>
+              <p className="ticket-id">Ticket ID: {latestBooking.id}</p>
+            </div>
+            <div className="notification-actions">
+              <button 
+                className="view-ticket-btn"
+                onClick={() => {
+                  openFullScreenTicket(latestBooking);
+                  setShowNewBookingNotification(false);
+                }}
+              >
+                View Ticket
+              </button>
+              <button 
+                className="close-btn"
+                onClick={() => setShowNewBookingNotification(false)}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <PlanExpirationNotification bookings={bookings} onDismiss={() => {}} />
       <div className="dashboard-main">
         <div className="dashboard-content">

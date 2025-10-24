@@ -324,34 +324,8 @@
   border: 2px solid var(--orange);
   box-shadow: 0 0 20px rgba(241, 90, 36, 0.3);
   animation: pulse-border 2s infinite;
-}
-
-
-@keyframes pulse-border {
-  0% { border-color: var(--orange); box-shadow: 0 0 5px rgba(241, 90, 36, 0.3); }
-  50% { border-color: #ff8c66; box-shadow: 0 0 20px rgba(241, 90, 36, 0.6); }
-  100% { border-color: var(--orange); box-shadow: 0 0 5px rgba(241, 90, 36, 0.3); }
-}
-
-.card-header.tickets-header {
-  background: linear-gradient(90deg, rgba(241, 90, 36, 0.2), transparent);
-  padding: 0.75rem 1rem;
-  margin: -1rem -1rem 1rem -1rem;
-  border-radius: 10px 10px 0 0;
-}
-
-.events-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-height: 400px; /* Or a suitable height */
-  overflow-y: auto;
-}
-
-/* Ensure tickets card shows full content without internal scrolling */
-.events-card.tickets-card .events-list {
-  max-height: none;
-  overflow: visible;
+  /* Make the card taller to improve appearance */
+  min-height: 300px;
 }
 
 /* Ensure the tickets card itself can expand to show all content */
@@ -360,701 +334,15 @@
   min-height: auto;
 }
 
-.event-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: var(--lightBorder);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.event-item:hover {
-  background: var(--lightBorder);
-}
-
-.event-info h4 {
-  margin: 0 0 0.5rem 0;
-  color: white;
-  font-size: 1rem;
-}
-
-.event-details {
-  color: var(--mediumText);
-  font-size: 0.8rem;
-  margin: 0 0 0.25rem 0;
-}
-
-.event-participants {
-  color: var(--orange);
-  font-size: 0.8rem;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.join-event-btn {
-  padding: 0.5rem 1rem;
-  background: var(--orange);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.join-event-btn:hover {
-  background: #d14a1f;
-  transform: translateY(-2px);
-}
-
-/* --- NEW STYLES FOR TICKETS --- */
-
-.ticket-item-container {
-  background: var(--lightBorder);
-  border-radius: 10px;
-  overflow: hidden; /* Important for animation */
-  border: 1px solid var(--darkBorder);
-}
-
-.ticket-item-container:hover {
-  background: var(--lightBorder);
-  border-color: var(--orange);
-}
-
-.booking-id-preview {
-  color: #aaa;
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-.details-toggle-btn-new {
-  background: none;
-  border: none;
-  color: var(--orange);
-  font-size: 1.5rem;
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.details-toggle-btn-new:hover {
-  background: rgba(241, 90, 36, 0.2);
-}
-
-.ticket-details-expanded {
-  padding: 1.5rem; 
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  border-top: 1px solid var(--lightBorder);
-  background: rgba(241, 90, 36, 0.05);
-  border-radius: 0 0 10px 10px;
-  min-height: 300px;
-  overflow: visible;
-}
-
-.ticket-details-info p {
-  margin: 0.25rem 0;
-  font-size: 0.9rem;
-  color: var(--mediumText);
-}
-
-.ticket-details-info strong {
-  color: white;
-}
-
-.free-trial-tag-dashboard {
-  color: #27ae60;
-  background-color: rgba(39, 174, 96, 0.2);
-  padding: 0.2rem 0.5rem;
-  border-radius: 5px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  display: inline-block;
-  margin-top: 0.5rem;
-}
-
-.ticket-qr-actions-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--lightBorder);
-  border-radius: 15px;
-  border: 2px solid var(--darkBorder);
-  margin-top: 1rem;
-  box-shadow: 0 4px 20px rgba(241, 90, 36, 0.2);
-}
-
-.ticket-details-qr {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  flex-shrink: 0;
-  min-width: 180px;
-  padding: 1rem;
-  background: var(--lightBorder);
-  border-radius: 10px;
-  border: 1px solid var(--darkBorder);
-}
-
-.qr-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 128px;
-  height: 128px;
-  background: var(--lightBorder);
-  border: 2px dashed var(--darkBorder);
-  border-radius: 10px;
-  text-align: center;
-}
-
-.qr-error p {
-  margin: 0.25rem 0;
-  color: var(--mediumText);
-  font-size: 0.8rem;
-}
-
-.ticket-actions-expanded {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  width: 100%;
-  align-items: stretch;
-}
-
-.view-ticket-btn, .download-ticket-btn {
-  padding: 0.75rem 1.25rem;
-  background: var(--orange);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  min-height: 44px;
-  box-shadow: 0 2px 10px rgba(241, 90, 36, 0.3);
-}
-
-.view-ticket-btn:hover, .download-ticket-btn:hover {
-  background: #d14a1f;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.5);
-}
-
-.download-ticket-btn {
-  background: var(--lightBorder);
-  border: 1px solid var(--darkBorder);
-  margin-top: 0.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.download-ticket-btn:hover {
-  background: rgba(241, 90, 36, 0.3);
-  border-color: var(--orange);
-  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.3);
-}
-
-.no-tickets-container {
-  text-align: center;
-  padding: 2rem;
-}
-
-.no-tickets-message {
-  margin-bottom: 1rem;
-  color: var(--mediumText);
-}
-
-.book-event-btn {
-  padding: 0.75rem 1.5rem;
-  background: var(--orange);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.book-event-btn:hover {
-  background: #d14a1f;
-  transform: translateY(-2px);
-}
-
-/* NEW: Full-Screen Ticket View Modal */
-.full-screen-ticket-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #121212;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(5px);
-}
-
-.full-screen-ticket-content {
-  background: linear-gradient(135deg, var(--appColor) 0%, var(--darkGrey) 100%);
-  border-radius: 20px;
-  padding: 2rem;
-  max-width: 90%;
-  width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  border: 1px solid var(--lightBorder);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-}
-
-.close-ticket-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: var(--lightBorder);
-  border: 1px solid var(--darkBorder);
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  transition: all 0.3s ease;
-}
-
-.close-ticket-btn:hover {
-  background: rgba(241, 90, 36, 0.2);
-  border-color: var(--orange);
-  transform: rotate(90deg);
-}
-
-.full-screen-ticket-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--lightBorder);
-}
-
-.full-screen-ticket-header h2 {
-  color: var(--orange);
-  margin: 0 0 0.5rem 0;
-  font-size: 1.8rem;
-}
-
-.ticket-id {
-  color: #aaa;
-  font-size: 0.9rem;
-  margin: 0;
-}
-
-.full-screen-ticket-body {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.ticket-info-section {
-  flex: 1;
-}
-
-.ticket-info-group {
-  margin-bottom: 1.5rem;
-}
-
-.ticket-info-group h3 {
-  color: var(--orange);
-  margin: 0 0 1rem 0;
-  font-size: 1.2rem;
-}
-
-.ticket-info-group p {
-  margin: 0.5rem 0;
-  color: var(--mediumText);
-  font-size: 1rem;
-}
-
-.ticket-info-group strong {
-  color: white;
-}
-
-.free-trial-badge-fullscreen {
-  background: linear-gradient(45deg, #4CAF50, #8BC34A);
-  padding: 10px 20px;
-  border-radius: 10px;
-  text-align: center;
-  display: inline-block;
-  animation: pulse 2s infinite;
-}
-
-.free-trial-badge-fullscreen span {
-  font-size: 1rem;
-  font-weight: bold;
-  color: white;
-}
-
-.ticket-qr-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.qr-instructions {
-  color: #aaa;
-  font-size: 0.9rem;
-  text-align: center;
-  margin: 0;
-}
-
-.full-screen-ticket-footer {
-  text-align: center;
-  padding-top: 1rem;
-  border-top: 1px solid var(--lightBorder);
-}
-
-.download-ticket-fullscreen-btn {
-  padding: 0.8rem 1.5rem;
-  background: var(--orange);
-  color: white;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.download-ticket-fullscreen-btn:hover {
-  background: #d14a1f;
-  transform: translateY(-2px);
-}
-
-/* --- END OF NEW STYLES --- */
-
-
-/* Loading and Error States */
-.loading-state, .error-state {
-  text-align: center;
-  padding: 2rem;
-  background: var(--lightBorder);
-  border-radius: 20px;
-  margin: 2rem 0;
-}
-
-.loading-state p, .error-state p {
-  margin: 0 0 1rem 0;
-  color: white;
-}
-
-.error-state button {
-  padding: 0.5rem 1rem;
-  background: var(--orange);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .dashboard-main {
-    padding-top: 70px;
-  }
-  
-  .dashboard-content {
-    padding: 1rem;
-  }
-  
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    align-items: stretch;
-  }
-  
-  .profile-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  
-  .profile-stats {
-    flex-direction: row;
-    gap: 0.5rem;
-  }
-  
-  .stat-item {
-    padding: 0.75rem;
-  }
-  
-  .stat-number {
-    font-size: 1.2rem;
-    margin-bottom: 0.25rem;
-  }
-  
-  .stat-label {
-    font-size: 0.7rem;
-  }
-  
-  .event-item {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-  
-  .join-event-btn {
-    width: 100%;
-  }
-
-  .ticket-details-expanded {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .profile-card,
-  .stats-card,
-  .events-card {
-    height: auto;
-  }
-  
-  .dashboard-header {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-    padding: 1rem;
-  }
-  
-  .card-header h3 {
-    font-size: 1.2rem;
-  }
-  
-  .profile-info h2 {
-    font-size: 1.3rem;
-  }
-  
-  .ticket-actions {
-    gap: 0.25rem;
-  }
-  
-  .view-tickets-btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
-  }
-  
-  .full-screen-ticket-content {
-    padding: 1.5rem;
-    margin: 1rem;
-    max-width: calc(100% - 2rem);
-  }
-  
-  .full-screen-ticket-body {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  
-  .full-screen-ticket-header h2 {
-    font-size: 1.5rem;
-  }
-  
-  .ticket-info-group h3 {
-    font-size: 1.1rem;
-  }
-  
-  .download-ticket-fullscreen-btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .full-screen-ticket-content {
-    padding: 1rem;
-  }
-  
-  .close-ticket-btn {
-    top: 0.5rem;
-    right: 0.5rem;
-    width: 35px;
-    height: 35px;
-    font-size: 1rem;
-  }
-  
-  .full-screen-ticket-header h2 {
-    font-size: 1.3rem;
-  }
-  
-  .ticket-info-group h3 {
-    font-size: 1rem;
-  }
-  
-  .ticket-info-group p {
-    font-size: 0.8rem;
-  }
-}
-
-/* Add responsive styles for the ticket modal */
-@media (max-width: 768px) {
-  .full-screen-ticket-modal {
-    padding: 1rem;
-  }
-  
-  .full-screen-ticket-content {
-    padding: 1.5rem !important;
-    margin: 1rem !important;
-    max-width: calc(100% - 2rem) !important;
-  }
-  
-  .full-screen-ticket-header h2 {
-    font-size: 1.5rem;
-  }
-  
-  .ticket-info-group h3 {
-    font-size: 1.1rem;
-  }
-  
-  .ticket-info-group p {
-    font-size: 0.9rem;
-  }
-  
-  .download-ticket-fullscreen-btn {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .close-ticket-btn {
-    top: 0.5rem;
-    right: 0.5rem;
-    width: 35px;
-    height: 35px;
-    font-size: 1rem;
-  }
-  
-  /* Make QR code smaller on mobile */
-  .ticket-qr-section canvas {
-    width: 150px !important;
-    height: 150px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .full-screen-ticket-content {
-    padding: 1rem !important;
-  }
-  
-  .full-screen-ticket-header h2 {
-    font-size: 1.3rem;
-  }
-  
-  .ticket-info-group h3 {
-    font-size: 1rem;
-  }
-  
-  .ticket-info-group p {
-    font-size: 0.85rem;
-  }
-  
-  /* Further reduce QR code size on small screens */
-  .ticket-qr-section canvas {
-    width: 120px !important;
-    height: 120px !important;
-  }
-  
-  .qr-instructions {
-    font-size: 0.8rem !important;
-  }
-}
-
-/* Ensure the ticket list is scrollable on small screens */
+/* Ensure tickets card shows full content without internal scrolling */
 .events-card.tickets-card .events-list {
-  max-height: 500px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
+  /* Add padding to ensure content is visible */
+  padding: 1rem 0;
 }
 
-/* Improve ticket item styling for better mobile experience */
-.ticket-item-container {
-  margin-bottom: 1rem;
-}
-
-.ticket-item-container .event-item {
-  padding: 1rem;
-}
-
-.ticket-item-container .event-info h4 {
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-}
-
-.ticket-item-container .event-details {
-  font-size: 0.85rem;
-}
-
-.booking-id-preview {
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-}
-
-.free-trial-tag-dashboard {
-  font-size: 0.75rem;
-  padding: 0.15rem 0.4rem;
-  margin-top: 0.5rem;
-}
-
-.view-ticket-btn {
-  font-size: 0.9rem;
-  padding: 0.6rem 1rem;
-}
-
-/* Add animation for the modal */
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.full-screen-ticket-content {
-  animation: modalFadeIn 0.3s ease-out;
-}
-
-/* Improve close button hover effect */
-.close-ticket-btn:hover {
-  background: rgba(241, 90, 36, 0.2) !important;
-  border-color: var(--orange) !important;
-  transform: rotate(90deg) !important;
-}
-
-/* Compact ticket card styles with proper padding */
+/* Improve ticket item styling for better appearance */
 .ticket-item-container {
   background: var(--lightBorder);
   border-radius: 8px;
@@ -1420,4 +708,125 @@
   margin-bottom: 1rem;
   color: var(--mediumText);
   font-size: 1rem;
+}
+
+/* New Booking Notification */
+.new-booking-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--darkGrey);
+  border: 2px solid var(--orange);
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-width: 350px;
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.new-booking-notification .notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.new-booking-notification .notification-icon {
+  color: var(--orange);
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.new-booking-notification .notification-text {
+  flex: 1;
+}
+
+.new-booking-notification .notification-text h4 {
+  margin: 0 0 0.5rem 0;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.new-booking-notification .notification-text p {
+  margin: 0 0 0.25rem 0;
+  color: var(--lightText);
+  font-size: 0.9rem;
+}
+
+.new-booking-notification .ticket-id {
+  font-family: monospace;
+  background: var(--lightBorder);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.new-booking-notification .notification-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.new-booking-notification .view-ticket-btn {
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.new-booking-notification .view-ticket-btn:hover {
+  background: #d14a1f;
+}
+
+.new-booking-notification .close-btn {
+  background: transparent;
+  color: var(--mediumText);
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-booking-notification .close-btn:hover {
+  color: white;
+}
+
+.join-event-btn {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #F15A24, #e05320);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(241, 90, 36, 0.3);
+  margin-top: 1rem;
+}
+
+.join-event-btn:hover {
+  background: linear-gradient(135deg, #e05320, #F15A24);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(241, 90, 36, 0.4);
 }

@@ -160,9 +160,13 @@ const Payments = () => {
     try {
       // Create booking
       const bookingsRef = collection(db, 'bookings');
+      // Ensure consistent event ID handling
+      const eventId = String(event.id);
+      console.log('Creating booking for event ID:', eventId);
+      
       const bookingData = {
         userId: user.uid,
-        eventId: String(event.id), // Ensure eventId is stored as string
+        eventId: eventId, // Ensure eventId is stored as string
         eventName: event.title,
         eventDate: new Date(event.date), // Ensure this is a Date object
         eventTime: event.time,
@@ -200,6 +204,21 @@ const Payments = () => {
         
         // Store in a special key to trigger notification
         localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
+        // Set flag to notify EventsPage and UserEventsPage to refresh
+        localStorage.setItem('eventsUpdated', 'true');
+        // Also set refreshBookings flag for immediate update
+        localStorage.setItem('refreshBookings', 'true');
+        
+        // NEW: Store in a global key that both pages will check
+        localStorage.setItem('latestEventBooking', JSON.stringify({
+          eventId: eventId,
+          bookingId: docRef.id,
+          timestamp: Date.now()
+        }));
+        
+        // NEW: Force immediate refresh by directly updating localStorage values
+        // that the pages check every 500ms
+        localStorage.setItem('forceRefresh', 'true');
       } else {
         console.log('Booking not found in database after creation');
       }
@@ -224,9 +243,13 @@ const Payments = () => {
     try {
       // Create booking after successful payment
       const bookingsRef = collection(db, 'bookings');
+      // Ensure consistent event ID handling
+      const eventId = String(event.id);
+      console.log('Creating booking for event ID:', eventId);
+      
       const bookingData = {
         userId: user.uid,
-        eventId: String(event.id),
+        eventId: eventId,
         eventName: event.title,
         eventDate: new Date(event.date),
         eventTime: event.time,
@@ -261,12 +284,34 @@ const Payments = () => {
         allBookings.push(bookingDataWithId);
         localStorage.setItem('eventBookings', JSON.stringify(allBookings));
         
-        // Store in a special key to trigger notification
+        // Store in special keys to trigger notification and refresh
         localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
+        localStorage.setItem('refreshBookings', 'true');
+        // Set flag to notify EventsPage and UserEventsPage to refresh
+        localStorage.setItem('eventsUpdated', 'true');
+        
+        // Store latest booking for ticket display
+        localStorage.setItem('latestBooking', JSON.stringify(bookingDataWithId));
+        
+        // NEW: Store in a global key that both pages will check
+        localStorage.setItem('latestEventBooking', JSON.stringify({
+          eventId: eventId,
+          bookingId: docRef.id,
+          timestamp: Date.now()
+        }));
+        
+        // NEW: Force immediate refresh by directly updating localStorage values
+        // that the pages check every 500ms
+        localStorage.setItem('forceRefresh', 'true');
       }
       
       setPaymentSuccess(true);
       showNotification('Payment successful! Your booking is confirmed.', 'success');
+      
+      // Redirect to dashboard after a short delay to show the success message
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
     } catch (error) {
       console.error('Error creating booking after payment:', error);
       showNotification('Payment successful but there was an issue creating your booking. Please contact support.', 'error');

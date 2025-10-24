@@ -7,17 +7,29 @@ import './PaymentButton.css';
 const PaymentButton = ({ amount, eventName, eventId, onPaymentSuccess, onPaymentFailure }) => {
   const [loading, setLoading] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
-  // Load Razorpay script dynamically
+  // Load Razorpay script dynamically with better error handling
   useEffect(() => {
     const loadRazorpayScript = () => {
+      // Check if already loaded
+      if (window.Razorpay) {
+        setRazorpayLoaded(true);
+        return Promise.resolve(true);
+      }
+
       return new Promise((resolve) => {
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
         script.onload = () => {
+          console.log('Razorpay SDK loaded successfully');
+          setRazorpayLoaded(true);
           resolve(true);
         };
         script.onerror = () => {
+          console.error('Failed to load Razorpay SDK');
+          setRazorpayLoaded(false);
           resolve(false);
         };
         document.body.appendChild(script);
@@ -29,18 +41,33 @@ const PaymentButton = ({ amount, eventName, eventId, onPaymentSuccess, onPayment
 
   const loadRazorpay = async () => {
     // Check if Razorpay script is loaded
-    if (!window.Razorpay) {
-      // Use onPaymentFailure to handle this error which will show notification in parent
-      if (onPaymentFailure) {
-        onPaymentFailure(new Error('Razorpay SDK failed to load. Are you online?'));
+    if (!razorpayLoaded || !window.Razorpay) {
+      // Try to load it again
+      try {
+        const scriptLoaded = await new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+        
+        if (!scriptLoaded) {
+          throw new Error('Failed to load Razorpay SDK. Please check your internet connection and try again.');
+        }
+        
+        setRazorpayLoaded(true);
+      } catch (loadError) {
+        if (onPaymentFailure) {
+          onPaymentFailure(loadError);
+        }
+        return;
       }
-      return;
     }
 
     // Validate payment data
     const validation = validatePaymentData({ amount, eventName, eventId });
     if (!validation.isValid) {
-      // Use onPaymentFailure to handle this error which will show notification in parent
       if (onPaymentFailure) {
         onPaymentFailure(new Error(validation.error));
       }
@@ -186,7 +213,7 @@ const PaymentButton = ({ amount, eventName, eventId, onPaymentSuccess, onPayment
     <button 
       className={`payment-button enhanced ${isOneRupeePayment ? 'one-rupee' : ''}`}
       onClick={loadRazorpay}
-      disabled={loading}
+      disabled={loading || !razorpayLoaded}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}

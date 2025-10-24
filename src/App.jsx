@@ -6,7 +6,8 @@ import {
 } from 'react-router-dom';
 import React, { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 // Import our stats scheduler
 import statsScheduler from './services/statsScheduler';
@@ -96,6 +97,40 @@ function App() {
         localStorage.removeItem('eventParticipants');
       }
     });
+    
+    // Add default "Weekly Community Run" event if it doesn't exist
+    const addDefaultEvent = async () => {
+      try {
+        // Check if the event already exists
+        const eventsRef = collection(db, 'upcomingEvents');
+        const q = query(eventsRef, where('name', '==', 'Weekly Community Run'));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          // Add the default event
+          const defaultEvent = {
+            name: 'Weekly Community Run',
+            date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Next week
+            time: '07:00 AM',
+            location: 'C3 Cafe, City Park',
+            description: 'Join fellow runners for an unforgettable experience.',
+            participants: 25,
+            maxParticipants: 50,
+            status: 'Open for Registration'
+          };
+          
+          const docRef = await addDoc(collection(db, 'upcomingEvents'), defaultEvent);
+          console.log('Default event added with ID:', docRef.id);
+        } else {
+          console.log('Default event already exists');
+        }
+      } catch (error) {
+        console.error('Error adding default event:', error);
+      }
+    };
+    
+    // Run the function to add default event
+    addDefaultEvent();
     
     // Start the stats scheduler when the app loads
     statsScheduler.start(60); // Run every 60 minutes (original frequency)

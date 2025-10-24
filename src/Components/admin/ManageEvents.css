@@ -1,123 +1,101 @@
-/* --- Global & Layout Improvements --- */
+/* Manage Events Component Styles */
 
-/* Use a modern, readable font and set a dark background for the Admin Panel */
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #121212; /* Very dark background */
-    color: #e0e0e0; /* Light text for high contrast */
-    margin: 0;
-}
-
-/* Base Admin Panel Styling - Assuming the dark orange/black is an outer container */
-.admin-panel {
-    /* If Admin Panel is the outermost container for the whole page */
-    padding-bottom: 4rem; /* Ensure space at the bottom */
-}
-
-/* Title Styling */
-h1 {
-    color: #F15A24; /* Bright accent color for main titles */
-    border-bottom: 2px solid #ff9800;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
-    font-weight: 300; /* Lighter font weight for a modern look */
-}
-
-/* Manage Events Section Styling */
 .manage-events {
-    padding: 2rem 4rem; /* More horizontal padding */
+    padding: 20px;
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: #e0e0e0;
 }
 
 .manage-events h2 {
-    color: #ffffff;
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 30px;
+    font-size: 28px;
     font-weight: 600;
+    color: #fff;
+    text-align: center;
 }
 
-/* --- Form Containers (The boxes) --- */
+.manage-events h3 {
+    color: #F15A24;
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 500;
+}
 
+/* Main Event Section */
+.manage-events > .form-container {
+    background: #2a2a2a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.manage-events > .form-container h3 {
+    text-align: center;
+    margin-top: 0;
+    color: #F15A24;
+    border-bottom: 1px solid #333;
+    padding-bottom: 15px;
+}
+
+/* Event Forms Container */
 .event-forms {
-    display: flex;
-    gap: 3rem; /* Increased gap between the two form boxes */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
 }
 
 .form-container {
-    flex: 1;
-    padding: 2rem;
-    /* Darker box background for contrast with body */
-    background-color: #1e1e1e;
-    /* Soft border and shadow for depth */
+    background: #2a2a2a;
     border: 1px solid #333;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    transition: transform 0.3s ease;
-}
-
-/* Little hover effect on the form containers */
-.form-container:hover {
-    transform: translateY(-3px);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .form-container h3 {
     margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: #eb6535; /* Accent color for form titles */
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 1.2rem;
+    color: #fff;
+    border-bottom: 1px solid #333;
+    padding-bottom: 15px;
 }
-
-.form-container form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem; /* Slightly more space between inputs */
-}
-
-/* --- Form Elements (Inputs & Textareas) --- */
 
 .form-container input,
-.form-container textarea {
-    padding: 1rem 0.75rem; /* Increased vertical padding for better tap targets */
-    /* Darker input field for the theme */
-    background-color: #2b2b2b;
-    color: #ffffff;
+.form-container textarea,
+.form-container select {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    background: #333;
     border: 1px solid #444;
     border-radius: 6px;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    color: #fff;
+    font-size: 15px;
 }
 
-.form-container input::placeholder,
-.form-container textarea::placeholder {
-    color: #999; /* Lighter placeholder text */
+.form-container textarea {
+    min-height: 100px;
+    resize: vertical;
 }
 
-/* Focus state for inputs */
 .form-container input:focus,
-.form-container textarea:focus {
+.form-container textarea:focus,
+.form-container select:focus {
     outline: none;
-    border-color: #e47147; /* Accent color border on focus */
-    box-shadow: 0 0 8px rgba(255, 152, 0, 0.3);
+    border-color: #F15A24;
+    box-shadow: 0 0 0 2px rgba(241, 90, 36, 0.3);
 }
-
-/* Custom placeholder styles to match the image's look (using attribute for better browser support) */
-/* The image uses light grey text inside the input, which is a bit unusual on a dark theme,
-   so I'll make the input background dark and the text white, and use the placeholder attribute for the label look */
-.form-container input[placeholder],
-.form-container textarea[placeholder] {
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    color: #999; /* Color for the "label-like" placeholder */
-    font-weight: 600;
-}
-
-/* --- Form Buttons --- */
 
 .form-container button {
-    padding: 1rem; /* Larger button for better clickability */
-    background-color:#e66435; /* Primary accent color */
-    color: #1e1e1e; /* Dark text on the bright button */
+    width: 100%;
+    padding: 14px;
+    background-color: #F15A24;
+    color: #1e1e1e;
     font-weight: bold;
     border: none;
     border-radius: 6px;
@@ -125,20 +103,36 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: background-color 0.3s, transform 0.2s;
+    margin-top: 10px;
 }
 
 .form-container button:hover {
-    background-color: #e05320; /* Lighter shade on hover */
-    transform: translateY(-2px); /* Slight lift effect */
+    background-color: #e05320;
+    transform: translateY(-2px);
 }
 
+.form-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
 
-/* --- Events List Section --- */
+.form-group label {
+    min-width: 120px;
+    color: #ccc;
+}
 
+.form-group input {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* Events List Section */
 .events-list {
     margin-top: 3rem;
     padding: 2rem;
-    background-color: #1e1e1e; /* Same dark background as forms */
+    background-color: #1e1e1e;
     border: 1px solid #333;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
@@ -163,7 +157,7 @@ h1 {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 0;
-    border-bottom: 1px solid #333; /* Darker line for separator */
+    border-bottom: 1px solid #333;
     color: #e0e0e0;
 }
 
@@ -171,7 +165,7 @@ h1 {
     border-bottom: none;
 }
 
-/* Action Buttons (Edit/Delete) in the list */
+/* Action Buttons in the list */
 .events-list li button {
     margin-left: 1rem;
     padding: 0.6rem 1.2rem;
@@ -182,15 +176,13 @@ h1 {
     transition: opacity 0.3s, background-color 0.3s;
 }
 
-/* Delete Button */
-.events-list li button:last-child {
-    background-color: #e74c3c; /* A strong red */
+.events-list li button:first-of-type {
+    background-color: #3498db;
     color: white;
 }
 
-/* Edit Button */
-.events-list li button:first-of-type {
-    background-color: #3498db; /* A professional blue for edit */
+.events-list li button:last-child {
+    background-color: #e74c3c;
     color: white;
 }
 
@@ -198,123 +190,116 @@ h1 {
     opacity: 0.8;
 }
 
-/* --- Modal Styles --- */
-
+/* Modal Styles */
 .modal {
-    /* Keep existing positioning */
-    background-color: rgba(0, 0, 0, 0.8); /* Darker overlay */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 .modal-content {
-    background-color: #1e1e1e; /* Dark background */
-    color: #e0e0e0;
-    padding: 2.5rem;
+    background: #2a2a2a;
     border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    max-width: 600px;
     width: 90%;
-    max-width: 550px;
+    padding: 2rem;
+    color: #e0e0e0;
+    border: 1px solid #333;
 }
 
 .modal-content h3 {
-    color:#F15A24;
-    font-size: 1.5rem;
-    margin-bottom: 2rem;
-    font-weight: 500;
+    margin-top: 0;
+    color: #fff;
+    border-bottom: 1px solid #333;
+    padding-bottom: 15px;
 }
 
 .modal-content input,
-.modal-content textarea {
-    padding: 1rem 0.75rem;
-    background-color: #2b2b2b;
-    color: #ffffff;
+.modal-content textarea,
+.modal-content select {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    background: #333;
     border: 1px solid #444;
     border-radius: 6px;
+    color: #fff;
+    font-size: 15px;
 }
 
-/* Modal Action Buttons */
+.modal-content textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus,
+.modal-content select:focus {
+    outline: none;
+    border-color: #F15A24;
+    box-shadow: 0 0 0 2px rgba(241, 90, 36, 0.3);
+}
+
 .modal-content button {
-    padding: 1rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 1.5rem;
+    padding: 12px 20px;
+    margin: 10px 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
 }
 
-/* Update Button (Success/Primary action) */
-.modal-content button:first-of-type {
-    background-color: #2ecc71; /* Vivid Green */
-    color: #1e1e1e;
-}
-
-/* Cancel Button (Secondary action) */
-.modal-content button:last-of-type {
-    background-color: #7f8c8d; /* Professional Gray */
+.modal-content button[type="submit"] {
+    background-color: #F15A24;
     color: white;
-    margin-left: 1rem;
 }
-/* --- Base Styles (Keep your attractive desktop styles) --- */
-/* ... (Keep all the existing CSS you provided, from body to .modal-content button:last-of-type) ... */
 
-/* --- Mobile Responsiveness Adjustments (New Code) --- */
+.modal-content button[type="button"] {
+    background-color: #333;
+    color: #fff;
+}
 
+.modal-content button:hover {
+    opacity: 0.8;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    /* 1. Adjust Padding for Smaller Screens */
-    .manage-events {
-        padding: 1rem; /* Reduce padding on the main container */
-    }
-
-    /* 2. Form Stacking (Crucial for Mobile) */
     .event-forms {
-        flex-direction: column; /* Stack the Upcoming and Past event forms vertically */
-        gap: 1.5rem; /* Slightly less gap when stacked */
+        grid-template-columns: 1fr;
     }
-
-    /* 3. Adjust Form Container Padding */
-    .form-container {
-        padding: 1.5rem; /* Reduce internal padding */
-        /* Flex: 1 is fine, but it will naturally take full width due to column direction */
+    
+    .manage-events {
+        padding: 15px;
     }
-
-    /* 4. Events List Item Cleanup */
+    
+    .form-container,
+    .events-list {
+        padding: 20px;
+    }
+    
     .events-list li {
-        flex-direction: column; /* Stack event details and buttons vertically */
-        align-items: flex-start; /* Align text to the left */
-        padding: 1rem; /* Increase vertical padding */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
-
-    /* 5. Grouping Buttons in List Items */
+    
     .events-list li button {
-        /* Add a small wrapper or just adjust button layout */
-        width: 100%; /* Make buttons take full width for easier tapping */
-        margin: 0.5rem 0 0 0; /* Add top margin for separation, remove side margin */
-        box-sizing: border-box; /* Ensure padding/border are inside the 100% width */
+        margin-left: 0;
+        margin-top: 5px;
     }
     
-    /* Ensure the image for past events doesn't break the layout */
-    .events-list li img {
-        margin-left: 0 !important; /* Remove any left margin */
-        margin-top: 0.5rem; /* Add some top margin */
-        margin-bottom: 0.5rem;
-    }
-    
-    /* 6. Modal Full Screen on Mobile */
     .modal-content {
-        width: 95%; /* Make the modal slightly wider */
-        max-width: none; /* Remove max-width constraint */
-        margin: 1rem; /* Give a small margin from the edges */
+        width: 95%;
         padding: 1.5rem;
-    }
-
-    /* 7. Modal Buttons Stacking */
-    /* Ensure update and cancel buttons are stacked or clearly separated */
-    .modal-content button {
-        width: 100%;
-        margin-left: 0 !important;
-        margin-top: 1rem;
-    }
-
-    .modal-content button:first-of-type {
-        /* The first button (Update) should not have an extra top margin if there are no other elements */
-        margin-top: 1.5rem; /* Original top margin */
     }
 }
