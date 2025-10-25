@@ -26,6 +26,12 @@ const ManageEvents = () => {
     const [editingEvent, setEditingEvent] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [mainUpcomingEvent, setMainUpcomingEvent] = useState(null); // For the main event shown on landing page
+    const [bookingStatus, setBookingStatus] = useState('closed'); // For storing booking status
+    const [closeBookingTime, setCloseBookingTime] = useState(''); // For storing close booking time
+    const [showTimePicker, setShowTimePicker] = useState(false); // For controlling time picker visibility
+    const [selectedHour, setSelectedHour] = useState(12); // Default hour
+    const [selectedMinute, setSelectedMinute] = useState(0); // Default minute
+    const [selectedPeriod, setSelectedPeriod] = useState('AM'); // Default period
 
     useEffect(() => {
         fetchEvents();
@@ -112,17 +118,54 @@ const ManageEvents = () => {
         setMainUpcomingEvent({ ...mainUpcomingEvent, [e.target.name]: e.target.value });
     };
 
+    // Handle time selection
+    const handleTimeSelect = () => {
+        // Format the time as HH:MM AM/PM
+        let hour = selectedHour;
+        if (selectedPeriod === 'AM' && hour === 12) {
+            hour = 0;
+        } else if (selectedPeriod === 'PM' && hour !== 12) {
+            hour += 12;
+        }
+        
+        const formattedTime = `${String(hour).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
+        setCloseBookingTime(`${mainUpcomingEvent.date}T${formattedTime}`);
+        setShowTimePicker(false);
+        setBookingStatus('closed');
+    };
+
     // Save the main upcoming event
     const handleSaveMainEvent = async (e) => {
         e.preventDefault();
+        
+        // Ask for booking options before saving
+        const shouldSave = window.confirm('Do you want to save the main event with the selected booking options?');
+        if (!shouldSave) return;
+        
         try {
+            // Prepare event data with booking information
+            const eventData = {
+                ...mainUpcomingEvent,
+                bookingStatus: bookingStatus
+            };
+            
+            // Add close booking time if status is closed and time is set
+            if (bookingStatus === 'closed' && closeBookingTime) {
+                eventData.bookingCloseTime = new Date(closeBookingTime);
+            }
+            
             if (mainUpcomingEvent.id) {
                 // Update existing event
-                await firebaseService.updateUpcomingEvent(mainUpcomingEvent.id, mainUpcomingEvent);
+                await firebaseService.updateUpcomingEvent(mainUpcomingEvent.id, eventData);
             } else {
                 // Create new event
-                await addDoc(collection(db, 'upcomingEvents'), mainUpcomingEvent);
+                await addDoc(collection(db, 'upcomingEvents'), eventData);
             }
+            
+            // Reset booking options
+            setBookingStatus('closed');
+            setCloseBookingTime('');
+            
             // Set flag to notify UserEventsPage to refresh
             localStorage.setItem('eventsUpdated', 'true');
             alert('Main upcoming event updated successfully!');
@@ -209,6 +252,54 @@ const ManageEvents = () => {
             } catch (error) {
                 console.error('Error deleting past event: ', error);
                 alert('Failed to delete past event.');
+            }
+        }
+    };
+
+    // Handle opening bookings for an event
+    const handleToggleBookingStatus = async (eventId, status) => {
+        try {
+            const eventRef = doc(db, 'upcomingEvents', eventId);
+            await updateDoc(eventRef, {
+                bookingStatus: status,
+                updatedAt: new Date()
+            });
+            
+            // Set flag to notify UserEventsPage to refresh
+            localStorage.setItem('eventsUpdated', 'true');
+            alert(`Bookings ${status === 'open' ? 'opened' : 'closed'} successfully!`);
+            fetchEvents();
+        } catch (error) {
+            console.error(`Error ${status === 'open' ? 'opening' : 'closing'} bookings: `, error);
+            alert(`Failed to ${status === 'open' ? 'open' : 'close'} bookings.`);
+        }
+    };
+
+    // Handle setting close booking time
+    const handleSetCloseBookingTime = async (eventId) => {
+        const time = prompt('Enter the time when bookings should close (e.g., 2023-12-31 18:00):');
+        if (time) {
+            try {
+                const closeTime = new Date(time);
+                if (isNaN(closeTime.getTime())) {
+                    alert('Invalid date/time format. Please use YYYY-MM-DD HH:MM format.');
+                    return;
+                }
+                
+                const eventRef = doc(db, 'upcomingEvents', eventId);
+                await updateDoc(eventRef, {
+                    bookingStatus: 'closed',
+                    bookingCloseTime: closeTime,
+                    updatedAt: new Date()
+                });
+                
+                // Set flag to notify UserEventsPage to refresh
+                localStorage.setItem('eventsUpdated', 'true');
+                alert('Bookings closed successfully!');
+                fetchEvents();
+            } catch (error) {
+                console.error('Error closing bookings: ', error);
+                alert('Failed to close bookings.');
             }
         }
     };
@@ -319,6 +410,88 @@ const ManageEvents = () => {
                                 min="1"
                             />
                         </div>
+                        
+                        {/* Booking Controls */}
+                        <div className="form-group">
+                            <label>Booking Status:</label>
+                            <div className="booking-controls">
+                                <button 
+                                    type="button"
+                                    className={`booking-btn ${bookingStatus === 'open' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setBookingStatus('open');
+                                        setShowTimePicker(false);
+                                    }}
+                                >
+                                    Open Bookings
+                                </button>
+                                <button 
+                                    type="button"
+                                    className={`booking-btn ${bookingStatus === 'closed' ? 'active' : ''}`}
+                                    onClick={() => setShowTimePicker(!showTimePicker)}
+                                >
+                                    Close Bookings
+                                </button>
+                            </div>
+                            
+                            {/* Time Picker for Close Bookings */}
+                            {showTimePicker && (
+                                <div className="time-picker">
+                                    <div className="time-inputs">
+                                        <select 
+                                            value={selectedHour} 
+                                            onChange={(e) => setSelectedHour(parseInt(e.target.value))}
+                                        >
+                                            {[...Array(12)].map((_, i) => (
+                                                <option key={i} value={i === 0 ? 12 : i}>
+                                                    {i === 0 ? 12 : i}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <span>:</span>
+                                        <select 
+                                            value={selectedMinute} 
+                                            onChange={(e) => setSelectedMinute(parseInt(e.target.value))}
+                                        >
+                                            {/* Generate options for all 60 minutes */}
+                                            {[...Array(60)].map((_, i) => (
+                                                <option key={i} value={i}>
+                                                    {String(i).padStart(2, '0')}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="period-buttons">
+                                            <button 
+                                                type="button"
+                                                className={selectedPeriod === 'AM' ? 'active' : ''}
+                                                onClick={() => setSelectedPeriod('AM')}
+                                            >
+                                                AM
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                className={selectedPeriod === 'PM' ? 'active' : ''}
+                                                onClick={() => setSelectedPeriod('PM')}
+                                            >
+                                                PM
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        className="set-time-btn"
+                                        onClick={handleTimeSelect}
+                                    >
+                                        Set Time
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {bookingStatus === 'closed' && closeBookingTime && (
+                                <p className="close-time-info">Bookings will close at: {new Date(closeBookingTime).toLocaleString()}</p>
+                            )}
+                        </div>
+                        
                         <button type="submit">Save Main Event</button>
                     </form>
                 )}
@@ -354,9 +527,30 @@ const ManageEvents = () => {
                 <ul>
                     {upcomingEvents.map(event => (
                         <li key={event.id}>
-                            {event.name} - {formatDate(event.date)}
-                            <button onClick={() => handleEdit(event, 'upcoming')}>Edit</button>
-                            <button onClick={() => handleDeleteUpcoming(event.id)}>Delete</button>
+                            <div>
+                                <strong>{event.name}</strong> - {formatDate(event.date)}
+                                {event.bookingStatus && (
+                                    <span className={`booking-status ${event.bookingStatus}`}>
+                                        ({event.bookingStatus === 'open' ? 'Bookings Open' : 'Bookings Closed'})
+                                    </span>
+                                )}
+                            </div>
+                            <div>
+                                <button onClick={() => handleEdit(event, 'upcoming')}>Edit</button>
+                                <button 
+                                    onClick={() => handleToggleBookingStatus(event.id, 'open')}
+                                    className={event.bookingStatus === 'open' ? 'active' : ''}
+                                >
+                                    Open Bookings
+                                </button>
+                                <button 
+                                    onClick={() => handleSetCloseBookingTime(event.id)}
+                                    className={event.bookingStatus === 'closed' ? 'active' : ''}
+                                >
+                                    Close Bookings
+                                </button>
+                                <button onClick={() => handleDeleteUpcoming(event.id)}>Delete</button>
+                            </div>
                         </li>
                     ))}
                 </ul>

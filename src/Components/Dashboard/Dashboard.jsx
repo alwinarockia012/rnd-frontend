@@ -466,7 +466,7 @@ Thank you for booking with R&D - Run and Develop!
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'center', 
-                marginTop: '1rem' 
+                marginTop: '0.75rem' 
               }}>
                 <button 
                   onClick={() => {
@@ -475,13 +475,13 @@ Thank you for booking with R&D - Run and Develop!
                     }
                   }}
                   style={{
-                    padding: '0.5rem 1rem',
+                    padding: '0.4rem 0.8rem',
                     backgroundColor: 'rgba(241, 90, 36, 0.2)',
                     color: 'white',
                     border: '1px solid var(--orange)',
-                    borderRadius: '20px',
+                    borderRadius: '16px',
                     cursor: 'pointer',
-                    fontSize: '0.9rem'
+                    fontSize: '0.8rem'
                   }}
                 >
                   Refresh Stats
@@ -594,48 +594,8 @@ Thank you for booking with R&D - Run and Develop!
                     <FaRunning className="card-icon" />
                     <h3>My Plan</h3>
                   </div>
-                  {/* Check if user has any bookings with isFreeTrial = true */}
-                  {bookings && bookings.some(booking => booking.isFreeTrial) ? (
-                    (() => {
-                      // Find the free trial booking to get dates
-                      const freeTrialBooking = bookings.find(booking => booking.isFreeTrial);
-                      
-                      // Calculate plan start and end dates
-                      const planStartDate = freeTrialBooking?.bookingDate || freeTrialBooking?.eventDate;
-                      let planEndDate = null;
-                      
-                      // If we have a valid start date, calculate end date (7 days for free trial)
-                      if (planStartDate) {
-                        planEndDate = new Date(planStartDate);
-                        planEndDate.setDate(planEndDate.getDate() + 7); // Assuming 7-day free trial
-                      }
-                      
-                      // Format dates as dd/mm/yy
-                      const formatDate = (date) => {
-                        if (!date || !(date instanceof Date)) return 'Date not available';
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const year = String(date.getFullYear()).slice(-2);
-                        return `${day}/${month}/${year}`;
-                      };
-                      
-                      const startDateFormatted = planStartDate ? formatDate(new Date(planStartDate)) : 'Date not available';
-                      const endDateFormatted = planEndDate ? formatDate(planEndDate) : 'Date not available';
-                      
-                      return (
-                        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                          <h4>Free Trial</h4>
-                          <p>{startDateFormatted} - {endDateFormatted}</p>
-                          <button 
-                            className="upgrade-btn" 
-                            onClick={() => navigate('/plans')}
-                          >
-                            Upgrade
-                          </button>
-                        </div>
-                      );
-                    })()
-                  ) : bookings && bookings.length > 0 ? (
+                  {/* Check if user has any paid bookings first, then check for free trial */}
+                  {bookings && bookings.some(booking => !booking.isFreeTrial) ? (
                     // Show the most recent paid plan
                     (() => {
                       const paidBookings = bookings.filter(booking => !booking.isFreeTrial);
@@ -737,6 +697,47 @@ Thank you for booking with R&D - Run and Develop!
                           </div>
                         );
                       }
+                    })()
+                  ) : bookings && bookings.some(booking => booking.isFreeTrial) ? (
+                    // Show free trial only if no paid bookings exist
+                    (() => {
+                      // Find the free trial booking to get dates
+                      const freeTrialBooking = bookings.find(booking => booking.isFreeTrial);
+                      
+                      // Calculate plan start and end dates
+                      const planStartDate = freeTrialBooking?.bookingDate || freeTrialBooking?.eventDate;
+                      let planEndDate = null;
+                      
+                      // If we have a valid start date, calculate end date (7 days for free trial)
+                      if (planStartDate) {
+                        planEndDate = new Date(planStartDate);
+                        planEndDate.setDate(planEndDate.getDate() + 7); // Assuming 7-day free trial
+                      }
+                      
+                      // Format dates as dd/mm/yy
+                      const formatDate = (date) => {
+                        if (!date || !(date instanceof Date)) return 'Date not available';
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = String(date.getFullYear()).slice(-2);
+                        return `${day}/${month}/${year}`;
+                      };
+                      
+                      const startDateFormatted = planStartDate ? formatDate(new Date(planStartDate)) : 'Date not available';
+                      const endDateFormatted = planEndDate ? formatDate(planEndDate) : 'Date not available';
+                      
+                      return (
+                        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                          <h4>Free Trial</h4>
+                          <p>{startDateFormatted} - {endDateFormatted}</p>
+                          <button 
+                            className="upgrade-btn" 
+                            onClick={() => navigate('/plans')}
+                          >
+                            Upgrade
+                          </button>
+                        </div>
+                      );
                     })()
                   ) : (
                     // No bookings at all

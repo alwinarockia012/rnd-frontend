@@ -126,6 +126,25 @@
   transform: scale(1.05);
 }
 
+/* Add styling for bookings closed status */
+.event-card .event-status-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #ff6600;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.event-card .event-status-badge.bookings-closed {
+  background: #e74c3c;
+}
+
 /* Event Content */
 .event-content {
   padding: 25px;

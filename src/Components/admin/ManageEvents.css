@@ -42,6 +42,103 @@
     padding-bottom: 15px;
 }
 
+/* Booking Controls */
+.booking-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.booking-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background-color: #333;
+    color: #e0e0e0;
+}
+
+.booking-btn:hover {
+    background-color: #444;
+}
+
+.booking-btn.active {
+    background-color: #2ecc71;
+    color: white;
+    font-weight: bold;
+}
+
+.close-time-info {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #F15A24;
+    font-style: italic;
+}
+
+/* Time Picker */
+.time-picker {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #333;
+    border-radius: 8px;
+    border: 1px solid #444;
+}
+
+.time-inputs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.time-inputs select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #2a2a2a;
+    color: #fff;
+    font-size: 16px;
+}
+
+.period-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.period-buttons button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    background-color: #444;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.period-buttons button.active {
+    background-color: #F15A24;
+    color: #fff;
+}
+
+.set-time-btn {
+    padding: 8px 16px;
+    background-color: #F15A24;
+    color: #1e1e1e;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: background-color 0.3s;
+}
+
+.set-time-btn:hover {
+    background-color: #e05320;
+}
+
 /* Event Forms Container */
 .event-forms {
     display: grid;
@@ -186,8 +283,32 @@
     color: white;
 }
 
+.events-list li button.active {
+    background-color: #2ecc71;
+    color: white;
+    font-weight: bold;
+}
+
 .events-list li button:hover {
     opacity: 0.8;
+}
+
+.booking-status {
+    margin-left: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.booking-status.open {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.booking-status.closed {
+    background-color: #e74c3c;
+    color: white;
 }
 
 /* Modal Styles */
@@ -301,5 +422,9 @@
     .modal-content {
         width: 95%;
         padding: 1.5rem;
+    }
+    
+    .time-inputs {
+        flex-wrap: wrap;
     }
 }

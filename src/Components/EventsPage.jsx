@@ -221,8 +221,30 @@ function EventsPage() {
     }
   };
 
+  // Function to check if bookings are closed for an event
+  const isBookingClosed = (event) => {
+    // If event has bookingStatus as 'closed' and bookingCloseTime is set
+    if (event.bookingStatus === 'closed' && event.bookingCloseTime) {
+      // Convert bookingCloseTime to Date object
+      let closeTime;
+      if (event.bookingCloseTime.toDate && typeof event.bookingCloseTime.toDate === 'function') {
+        closeTime = event.bookingCloseTime.toDate();
+      } else if (event.bookingCloseTime instanceof Date) {
+        closeTime = event.bookingCloseTime;
+      } else {
+        closeTime = new Date(event.bookingCloseTime);
+      }
+      
+      // Compare with current time
+      const now = new Date();
+      return now >= closeTime;
+    }
+    
+    return false;
+  };
+
   // Check if a user has already booked a specific event - ENHANCED VERSION WITH TODAY'S BOOKING CHECK
-  const hasUserBookedEvent = (eventId) => {
+  const hasUserBookedEvent = (eventId, eventDate) => {
     // Make sure we have user bookings data
     if (!userBookings || userBookings.length === 0) {
       console.log('No user bookings found');
@@ -250,31 +272,77 @@ function EventsPage() {
             bookingEventIdStr == targetEventId ||
             bookingEventIdStr.trim() === targetEventId.trim()) {
           
-          // Check if this booking was made today
-          const bookingDate = booking.bookingDate || booking.createdAt;
-          if (bookingDate) {
-            let bookingTime;
-            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-              bookingTime = bookingDate.toDate();
-            } else if (bookingDate instanceof Date) {
-              bookingTime = bookingDate;
-            } else {
-              bookingTime = new Date(bookingDate);
+          // If eventDate is provided, also check if the booking is for the same date
+          if (eventDate) {
+            const bookingEventDate = booking.eventDate;
+            if (bookingEventDate) {
+              let bookingDate;
+              if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
+                bookingDate = bookingEventDate.toDate();
+              } else if (bookingEventDate instanceof Date) {
+                bookingDate = bookingEventDate;
+              } else {
+                bookingDate = new Date(bookingEventDate);
+              }
+              
+              // Compare dates
+              const eventDateObj = new Date(eventDate);
+              if (bookingDate.toDateString() === eventDateObj.toDateString()) {
+                // Check if this booking was made today
+                const bookingCreationDate = booking.bookingDate || booking.createdAt;
+                if (bookingCreationDate) {
+                  let bookingTime;
+                  if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+                    bookingTime = bookingCreationDate.toDate();
+                  } else if (bookingCreationDate instanceof Date) {
+                    bookingTime = bookingCreationDate;
+                  } else {
+                    bookingTime = new Date(bookingCreationDate);
+                  }
+                  
+                  // Set time to beginning of day for comparison
+                  bookingTime.setHours(0, 0, 0, 0);
+                  
+                  // If booking was made today, return true
+                  if (bookingTime.getTime() === today.getTime()) {
+                    console.log('MATCH FOUND FOR TODAY!');
+                    return true;
+                  }
+                }
+                
+                // For backward compatibility, return true for any match
+                console.log('MATCH FOUND!');
+                return true;
+              }
+            }
+          } else {
+            // If no eventDate provided, use original logic
+            // Check if this booking was made today
+            const bookingDate = booking.bookingDate || booking.createdAt;
+            if (bookingDate) {
+              let bookingTime;
+              if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+                bookingTime = bookingDate.toDate();
+              } else if (bookingDate instanceof Date) {
+                bookingTime = bookingDate;
+              } else {
+                bookingTime = new Date(bookingDate);
+              }
+              
+              // Set time to beginning of day for comparison
+              bookingTime.setHours(0, 0, 0, 0);
+              
+              // If booking was made today, return true
+              if (bookingTime.getTime() === today.getTime()) {
+                console.log('MATCH FOUND FOR TODAY!');
+                return true;
+              }
             }
             
-            // Set time to beginning of day for comparison
-            bookingTime.setHours(0, 0, 0, 0);
-            
-            // If booking was made today, return true
-            if (bookingTime.getTime() === today.getTime()) {
-              console.log('MATCH FOUND FOR TODAY!');
-              return true;
-            }
+            // For backward compatibility, return true for any match
+            console.log('MATCH FOUND!');
+            return true;
           }
-          
-          // For backward compatibility, return true for any match
-          console.log('MATCH FOUND!');
-          return true;
         }
       }
     }
@@ -284,7 +352,7 @@ function EventsPage() {
   };
 
   // New function to check if user booked today (regardless of event)
-  const hasUserBookedToday = (eventId) => {
+  const hasUserBookedToday = (eventId, eventDate) => {
     if (!userBookings || userBookings.length === 0) {
       return false;
     }
@@ -309,16 +377,38 @@ function EventsPage() {
         return false;
       }
       
+      // If eventDate is provided, also check if the booking is for the same date
+      if (eventDate) {
+        const bookingEventDate = booking.eventDate;
+        if (bookingEventDate) {
+          let bookingDate;
+          if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
+            bookingDate = bookingEventDate.toDate();
+          } else if (bookingEventDate instanceof Date) {
+            bookingDate = bookingEventDate;
+          } else {
+            bookingDate = new Date(bookingEventDate);
+          }
+          
+          // Compare dates
+          const eventDateObj = new Date(eventDate);
+          if (bookingDate.toDateString() !== eventDateObj.toDateString()) {
+            // Different date, so not the same event instance
+            return false;
+          }
+        }
+      }
+      
       // Now check if the booking was made today
-      const bookingDate = booking.bookingDate || booking.createdAt;
-      if (bookingDate) {
+      const bookingCreationDate = booking.bookingDate || booking.createdAt;
+      if (bookingCreationDate) {
         let bookingTime;
-        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-          bookingTime = bookingDate.toDate();
-        } else if (bookingDate instanceof Date) {
-          bookingTime = bookingDate;
+        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+          bookingTime = bookingCreationDate.toDate();
+        } else if (bookingCreationDate instanceof Date) {
+          bookingTime = bookingCreationDate;
         } else {
-          bookingTime = new Date(bookingDate);
+          bookingTime = new Date(bookingCreationDate);
         }
         
         bookingTime.setHours(0, 0, 0, 0);
@@ -340,6 +430,12 @@ function EventsPage() {
     if (!user.phoneNumber) {
       alert('To book an event, please ensure your profile has a phone number.');
       navigate('/profile');
+      return;
+    }
+
+    // Check if bookings are closed
+    if (isBookingClosed(event)) {
+      alert('Bookings for this event are currently closed.');
       return;
     }
 
@@ -446,9 +542,13 @@ function EventsPage() {
                     e.stopPropagation();
                     handleRegister(mainEvent);
                   }}
+                  disabled={isBookingClosed(mainEvent) || 
+                           hasUserBookedToday(mainEvent.id, mainEvent.date) || 
+                           hasUserBookedEvent(mainEvent.id, mainEvent.date)}
                 >
-                  {hasUserBookedToday(mainEvent.id) ? 'Already Booked Today' : 
-                   hasUserBookedEvent(mainEvent.id) ? 'Already Booked' : 'Book Your Slot Now'}
+                  {isBookingClosed(mainEvent) ? 'Bookings Closed' :
+                   hasUserBookedToday(mainEvent.id, mainEvent.date) ? 'Already Booked Today' : 
+                   hasUserBookedEvent(mainEvent.id, mainEvent.date) ? 'Already Booked' : 'Book Your Slot Now'}
                 </button>
 
                 {/* Mobile toggle indicator */}

@@ -412,6 +412,29 @@
   transform: translateX(5px);
 }
 
+/* Disabled button styles for "Booked for this week" */
+.cta-button:disabled {
+  background: linear-gradient(135deg, #F15A24 50%, #ff7849 100%);
+  color: #000;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.2);
+  opacity: 0.8;
+}
+
+.cta-button:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(241, 90, 36, 0.2);
+}
+
+.cta-button:disabled .button-arrow {
+  transform: none;
+}
+
+.cta-button:disabled::before {
+  display: none;
+}
+
 /* Enhanced Payment Modal Styles */
 .payment-modal-overlay {
   position: fixed;

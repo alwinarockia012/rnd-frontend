@@ -43,6 +43,31 @@
   line-height: 1.6;
 }
 
+/* Section Header (New) */
+.section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-header h2 {
+  font-size: 2rem;
+  color: var(--orange);
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.section-header p {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
 /* Tab Navigation */
 .events-tabs {
   display: flex;
@@ -138,6 +163,12 @@
 
 .event-status-badge.past {
   background: #666;
+}
+
+/* Add styling for bookings closed status */
+.event-status-badge:contains('Bookings Closed'),
+.event-status-badge.bookings-closed {
+  background: #e74c3c;
 }
 
 /* Event Details */

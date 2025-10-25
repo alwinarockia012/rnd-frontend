@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { db } from '../../firebase';
 import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import jsQR from 'jsqr';
@@ -19,10 +19,65 @@ const QRScanner = () => {
   const [phoneNumberSearch, setPhoneNumberSearch] = useState(''); // New state for phone number search
   const [userBookingStatus, setUserBookingStatus] = useState(null); // New state for user booking status
   const [searching, setSearching] = useState(false); // New state for search loading
+  const [freeTrialStatus, setFreeTrialStatus] = useState(null); // New state for free trial status
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Function to determine plan type based on event name
+  const getPlanType = useCallback((eventName) => {
+    if (!eventName) return 'unknown';
+    
+    const name = eventName.toLowerCase();
+    if (name.includes('free') && name.includes('trial')) {
+      return 'free-trial';
+    } else if (name.includes('pay') && name.includes('per') && name.includes('run')) {
+      return 'pay-per-run';
+    } else if (name.includes('monthly') && name.includes('membership')) {
+      return 'monthly-membership';
+    } else {
+      return 'unknown';
+    }
+  }, []);
+  
+  // Function to check if a booking is still valid based on plan type
+  const isBookingValid = useCallback((bookingDate, planType) => {
+    if (!bookingDate) return false;
+    
+    let date;
+    if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+      date = bookingDate.toDate();
+    } else if (bookingDate instanceof Date) {
+      date = bookingDate;
+    } else {
+      date = new Date(bookingDate);
+    }
+    
+    // Determine validity period based on plan type
+    const now = new Date();
+    let validPeriodStart;
+    
+    switch (planType) {
+      case 'free-trial':
+      case 'pay-per-run':
+        // Both free trial and pay-per-run are valid for 7 days
+        validPeriodStart = new Date();
+        validPeriodStart.setDate(now.getDate() - 7);
+        break;
+      case 'monthly-membership':
+        // Monthly membership is valid for 30 days
+        validPeriodStart = new Date();
+        validPeriodStart.setDate(now.getDate() - 30);
+        break;
+      default:
+        // Default to 7 days for unknown plan types
+        validPeriodStart = new Date();
+        validPeriodStart.setDate(now.getDate() - 7);
+    }
+    
+    return date > validPeriodStart;
+  }, []);
 
   const handleTicketDataChange = (event) => {
     // Add safety check for event and target
@@ -472,9 +527,16 @@ const QRScanner = () => {
             const bookingData = bookingSnap.data();
             console.log('✅ Found booking in database:', bookingData);
             
+            const isFreeTrial = bookingData.isFreeTrial || parsedData.isFreeTrial || false;
+            const eventName = bookingData.eventName || parsedData.event || 'Unknown Event';
+            const bookingDate = bookingData.bookingDate?.toDate ? 
+              bookingData.bookingDate.toDate() : 
+              (bookingData.bookingDate || new Date());
+            const planType = getPlanType(eventName);
+            
             setTicketInfo({
               id: parsedData.id || 'N/A',
-              eventName: bookingData.eventName || parsedData.event || 'Unknown Event',
+              eventName: eventName,
               eventDate: bookingData.eventDate?.toDate ? 
                 bookingData.eventDate.toDate() : 
                 (bookingData.eventDate || parsedData.date || new Date()),
@@ -485,18 +547,23 @@ const QRScanner = () => {
               phoneNumber: bookingData.phoneNumber || parsedData.phoneNumber || 'Phone not available',
               userId: bookingData.userId || parsedData.userId || 'User ID not available',
               eventId: bookingData.eventId || parsedData.eventId || 'Event ID not available',
-              bookingDate: bookingData.bookingDate?.toDate ? 
-                bookingData.bookingDate.toDate() : 
-                (bookingData.bookingDate || new Date()),
-              isFreeTrial: bookingData.isFreeTrial || parsedData.isFreeTrial || false,
-              status: bookingData.status || parsedData.status || 'confirmed'
+              bookingDate: bookingDate,
+              isFreeTrial: isFreeTrial,
+              status: bookingData.status || parsedData.status || 'confirmed',
+              planType: planType,
+              isBookingValid: isBookingValid(bookingDate, planType)
             });
             setSuccess('✅ Ticket verified successfully from database!');
           } else {
             console.log('⚠️ Booking not found in database, using QR code data');
+            const isFreeTrial = parsedData.isFreeTrial || false;
+            const eventName = parsedData.event || 'Unknown Event';
+            const bookingDate = parsedData.bookingDate ? new Date(parsedData.bookingDate) : new Date();
+            const planType = getPlanType(eventName);
+            
             setTicketInfo({
               id: parsedData.id || 'N/A',
-              eventName: parsedData.event || 'Unknown Event',
+              eventName: eventName,
               eventDate: parsedData.date ? new Date(parsedData.date) : new Date(),
               eventTime: parsedData.time || 'Unknown Time',
               eventLocation: parsedData.location || 'Location not available',
@@ -505,9 +572,11 @@ const QRScanner = () => {
               phoneNumber: parsedData.phoneNumber || 'Phone not available',
               userId: parsedData.userId || 'User ID not available',
               eventId: parsedData.eventId || 'Event ID not available',
-              bookingDate: parsedData.bookingDate ? new Date(parsedData.bookingDate) : new Date(),
-              isFreeTrial: parsedData.isFreeTrial || false,
-              status: parsedData.status || 'confirmed'
+              bookingDate: bookingDate,
+              isFreeTrial: isFreeTrial,
+              status: parsedData.status || 'confirmed',
+              planType: planType,
+              isBookingValid: isBookingValid(bookingDate, planType)
             });
             setSuccess('✅ Ticket verified from QR code data!');
           }
@@ -515,9 +584,14 @@ const QRScanner = () => {
           console.error('❌ Database error:', dbError);
           setError('Database connection error. Using QR code data only.');
           // Fallback to QR code data
+          const isFreeTrial = parsedData.isFreeTrial || false;
+          const eventName = parsedData.event || 'Unknown Event';
+          const bookingDate = parsedData.bookingDate ? new Date(parsedData.bookingDate) : new Date();
+          const planType = getPlanType(eventName);
+          
           setTicketInfo({
             id: parsedData.id || 'N/A',
-            eventName: parsedData.event || 'Unknown Event',
+            eventName: eventName,
             eventDate: parsedData.date ? new Date(parsedData.date) : new Date(),
             eventTime: parsedData.time || 'Unknown Time',
             eventLocation: parsedData.location || 'Location not available',
@@ -526,17 +600,24 @@ const QRScanner = () => {
             phoneNumber: parsedData.phoneNumber || 'Phone not available',
             userId: parsedData.userId || 'User ID not available',
             eventId: parsedData.eventId || 'Event ID not available',
-            bookingDate: parsedData.bookingDate ? new Date(parsedData.bookingDate) : new Date(),
-            isFreeTrial: parsedData.isFreeTrial || false,
-            status: parsedData.status || 'confirmed'
+            bookingDate: bookingDate,
+            isFreeTrial: isFreeTrial,
+            status: parsedData.status || 'confirmed',
+            planType: planType,
+            isBookingValid: isBookingValid(bookingDate, planType)
           });
         }
       } else {
         // No booking ID, use QR code data directly
         console.log('📝 No booking ID found, using QR code data directly');
+        const isFreeTrial = parsedData.isFreeTrial || false;
+        const eventName = parsedData.event || parsedData.rawData || 'Unknown Event';
+        const bookingDate = parsedData.bookingDate ? new Date(parsedData.bookingDate) : new Date();
+        const planType = getPlanType(eventName);
+        
         setTicketInfo({
           id: parsedData.id || 'N/A',
-          eventName: parsedData.event || parsedData.rawData || 'Unknown Event',
+          eventName: eventName,
           eventDate: parsedData.date ? new Date(parsedData.date) : new Date(),
           eventTime: parsedData.time || 'Unknown Time',
           eventLocation: parsedData.location || 'Location not available',
@@ -545,9 +626,11 @@ const QRScanner = () => {
           phoneNumber: parsedData.phoneNumber || 'Phone not available',
           userId: parsedData.userId || 'User ID not available',
           eventId: parsedData.eventId || 'Event ID not available',
-          bookingDate: parsedData.bookingDate ? new Date(parsedData.bookingDate) : new Date(),
-          isFreeTrial: parsedData.isFreeTrial || false,
-          status: parsedData.status || 'confirmed'
+          bookingDate: bookingDate,
+          isFreeTrial: isFreeTrial,
+          status: parsedData.status || 'confirmed',
+          planType: planType,
+          isBookingValid: isBookingValid(bookingDate, planType)
         });
         setSuccess('✅ Ticket data processed successfully!');
       }
@@ -1040,6 +1123,14 @@ const QRScanner = () => {
                     'N/A'}
                 </span>
               </div>
+              {(ticketInfo.isFreeTrial || ticketInfo.eventName) && (
+                <div className="detail-row">
+                  <span className="detail-label">Plan Status:</span>
+                  <span className={`detail-value status ${isBookingValid(ticketInfo.bookingDate, getPlanType(ticketInfo.eventName)) ? 'confirmed' : 'used'}`}>
+                    {isBookingValid(ticketInfo.bookingDate, getPlanType(ticketInfo.eventName)) ? 'Active' : 'Expired'}
+                  </span>
+                </div>
+              )}
             </div>
             
             <div className="ticket-actions">

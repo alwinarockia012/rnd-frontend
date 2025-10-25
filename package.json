@@ -50,7 +50,8 @@
     "fix-community-posts": "node scripts/fixCommunityPosts.js",
     "update-stats": "node scripts/updateUserStats.js",
     "update-stats-all": "node scripts/updateUserStats.js --all",
-    "update-stats-recent": "node scripts/updateUserStats.js --recent"
+    "update-stats-recent": "node scripts/updateUserStats.js --recent",
+    "reset-bookings": "node scripts/reset-bookings.js"
   },
   "eslintConfig": {
     "extends": [

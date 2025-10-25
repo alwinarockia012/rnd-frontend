@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import firebaseService from '../../services/firebaseService';
 import { formatDate } from '../../utils/dateUtils';
+import DashboardNav from '../DashboardNav/DashboardNav';
 import './UserEventsPage.css';
 
 function UserEventsPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [userBookings, setUserBookings] = useState([]);
-  const [notificationPreferences, setNotificationPreferences] = useState({});
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' or 'past'
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [pastEvents, setPastEvents] = useState([]);
@@ -62,13 +62,14 @@ function UserEventsPage() {
   // Check for refresh flag
   useEffect(() => {
     const checkForRefresh = () => {
+      let shouldTriggerRefresh = false;
+      
       // Check for refresh flag
       const shouldRefresh = localStorage.getItem('refreshBookings');
       if (shouldRefresh === 'true') {
         // Clear the refresh flag
         localStorage.removeItem('refreshBookings');
-        // Trigger a refresh
-        setLastRefresh(Date.now());
+        shouldTriggerRefresh = true;
       }
       
       // Check for new booking flag (set after successful payment)
@@ -76,8 +77,7 @@ function UserEventsPage() {
       if (newBooking) {
         // Clear the new booking flag
         localStorage.removeItem('newBooking');
-        // Trigger a refresh
-        setLastRefresh(Date.now());
+        shouldTriggerRefresh = true;
       }
       
       // Check for event updates flag (set when events are updated in admin)
@@ -85,14 +85,19 @@ function UserEventsPage() {
       if (eventsUpdated === 'true') {
         // Clear the events updated flag
         localStorage.removeItem('eventsUpdated');
-        // Trigger a refresh
-        setLastRefresh(Date.now());
+        shouldTriggerRefresh = true;
       }
       
       // Check for latest event booking (new approach)
       const latestEventBooking = localStorage.getItem('latestEventBooking');
       if (latestEventBooking) {
-        // Trigger a refresh
+        // Clear the latest event booking flag
+        localStorage.removeItem('latestEventBooking');
+        shouldTriggerRefresh = true;
+      }
+      
+      // Only trigger refresh if needed
+      if (shouldTriggerRefresh) {
         setLastRefresh(Date.now());
       }
     };
@@ -100,8 +105,8 @@ function UserEventsPage() {
     // Check immediately when component mounts
     checkForRefresh();
 
-    // Check more frequently (every 500ms) for faster updates
-    const interval = setInterval(checkForRefresh, 500);
+    // Check less frequently (every 5 seconds) to reduce performance impact
+    const interval = setInterval(checkForRefresh, 5000);
     
     return () => clearInterval(interval);
   }, []);
@@ -222,21 +227,126 @@ function UserEventsPage() {
     }
   };
 
-  // Add a function to refresh bookings
-  const refreshUserBookings = async () => {
-    if (user && user.uid) {
-      await fetchUserBookings(user.uid);
+  // Function to check if bookings are closed for an event
+  const isBookingClosed = (event) => {
+    // If event has bookingStatus as 'closed' and bookingCloseTime is set
+    if (event.bookingStatus === 'closed' && event.bookingCloseTime) {
+      // Convert bookingCloseTime to Date object
+      let closeTime;
+      if (event.bookingCloseTime.toDate && typeof event.bookingCloseTime.toDate === 'function') {
+        closeTime = event.bookingCloseTime.toDate();
+      } else if (event.bookingCloseTime instanceof Date) {
+        closeTime = event.bookingCloseTime;
+      } else {
+        closeTime = new Date(event.bookingCloseTime);
+      }
+      
+      // Compare with current time
+      const now = new Date();
+      return now >= closeTime;
     }
+    
+    return false;
   };
 
-  useEffect(() => {
-    if (user && user.uid) {
-      fetchUserBookings(user.uid);
+  // Function to check if user has booked this week or month based on plan (similar to Plans component)
+  const hasBookedThisWeek = useCallback((planName) => {
+    // Get bookings from localStorage
+    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+    
+    if (!localBookings || localBookings.length === 0) {
+      return false;
     }
-  }, [user, lastRefresh]);
+    
+    // Get today's date for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // For Monthly Membership, check if booked this month
+    if (planName === 'Monthly Membership') {
+      // Get start of month
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      // Get end of month
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+      
+      // Check if any booking was made this month for Monthly Membership
+      return localBookings.some(booking => {
+        // Check if booking is for Monthly Membership
+        if (booking.eventName !== 'Monthly Membership') {
+          return false;
+        }
+        
+        // Check if booking was made this month
+        const bookingDate = booking.bookingDate || booking.createdAt;
+        if (bookingDate) {
+          let bookingTime;
+          if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+            bookingTime = bookingDate.toDate();
+          } else if (bookingDate instanceof Date) {
+            bookingTime = bookingDate;
+          } else {
+            bookingTime = new Date(bookingDate);
+          }
+          
+          return bookingTime >= startOfMonth && bookingTime <= endOfMonth;
+        }
+        
+        return false;
+      });
+    }
+    
+    // For Pay-Per-Run, check if booked this week
+    // Get current week start (Monday)
+    const dayOfWeek = today.getDay();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); // Adjust when Sunday (0)
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    // Get end of week (Sunday)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    
+    // Check if any booking was made this week for Pay-Per-Run
+    return localBookings.some(booking => {
+      // Check if booking matches the plan name
+      if (booking.eventName !== planName) {
+        return false;
+      }
+      
+      // First check if booking was made today (immediate feedback)
+      const bookingDate = booking.bookingDate || booking.createdAt;
+      if (bookingDate) {
+        let bookingTime;
+        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+          bookingTime = bookingDate.toDate();
+        } else if (bookingDate instanceof Date) {
+          bookingTime = bookingDate;
+        } else {
+          bookingTime = new Date(bookingDate);
+        }
+        
+        // Set time to beginning of day for comparison
+        bookingTime.setHours(0, 0, 0, 0);
+        
+        // If booking was made today, return true immediately
+        if (bookingTime.getTime() === today.getTime()) {
+          return true;
+        }
+        
+        // Otherwise check if booking was made this week
+        return bookingTime >= startOfWeek && bookingTime <= endOfWeek;
+      }
+      
+      return false;
+    });
+  }, []);
 
   // ENHANCED VERSION - Check if a user has already booked a specific event WITH DEBUGGING AND TODAY'S CHECK
-  const hasUserBookedEvent = (eventId) => {
+  const hasUserBookedEvent = (eventId, eventDate) => {
     // Make sure we have user bookings data
     if (!userBookings || userBookings.length === 0) {
       console.log('No user bookings found');
@@ -264,31 +374,77 @@ function UserEventsPage() {
             bookingEventIdStr == targetEventId ||
             bookingEventIdStr.trim() === targetEventId.trim()) {
           
-          // Check if this booking was made today
-          const bookingDate = booking.bookingDate || booking.createdAt;
-          if (bookingDate) {
-            let bookingTime;
-            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-              bookingTime = bookingDate.toDate();
-            } else if (bookingDate instanceof Date) {
-              bookingTime = bookingDate;
-            } else {
-              bookingTime = new Date(bookingDate);
+          // If eventDate is provided, also check if the booking is for the same date
+          if (eventDate) {
+            const bookingEventDate = booking.eventDate;
+            if (bookingEventDate) {
+              let bookingDate;
+              if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
+                bookingDate = bookingEventDate.toDate();
+              } else if (bookingEventDate instanceof Date) {
+                bookingDate = bookingEventDate;
+              } else {
+                bookingDate = new Date(bookingEventDate);
+              }
+              
+              // Compare dates
+      const eventDateObj = new Date(eventDate);
+              if (bookingDate.toDateString() === eventDateObj.toDateString()) {
+                // Check if this booking was made today
+                const bookingCreationDate = booking.bookingDate || booking.createdAt;
+                if (bookingCreationDate) {
+                  let bookingTime;
+                  if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+                    bookingTime = bookingCreationDate.toDate();
+                  } else if (bookingCreationDate instanceof Date) {
+                    bookingTime = bookingCreationDate;
+                  } else {
+                    bookingTime = new Date(bookingCreationDate);
+                  }
+                  
+                  // Set time to beginning of day for comparison
+                  bookingTime.setHours(0, 0, 0, 0);
+                  
+                  // If booking was made today, return true
+                  if (bookingTime.getTime() === today.getTime()) {
+                    console.log('MATCH FOUND FOR TODAY!');
+                    return true;
+                  }
+                }
+                
+                // For backward compatibility, return true for any match
+                console.log('MATCH FOUND!');
+                return true;
+              }
+            }
+          } else {
+            // If no eventDate provided, use original logic
+            // Check if this booking was made today
+            const bookingDate = booking.bookingDate || booking.createdAt;
+            if (bookingDate) {
+              let bookingTime;
+              if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+                bookingTime = bookingDate.toDate();
+              } else if (bookingDate instanceof Date) {
+                bookingTime = bookingDate;
+              } else {
+                bookingTime = new Date(bookingDate);
+              }
+              
+              // Set time to beginning of day for comparison
+              bookingTime.setHours(0, 0, 0, 0);
+              
+              // If booking was made today, return true
+              if (bookingTime.getTime() === today.getTime()) {
+                console.log('MATCH FOUND FOR TODAY!');
+                return true;
+              }
             }
             
-            // Set time to beginning of day for comparison
-            bookingTime.setHours(0, 0, 0, 0);
-            
-            // If booking was made today, return true
-            if (bookingTime.getTime() === today.getTime()) {
-              console.log('MATCH FOUND FOR TODAY!');
-              return true;
-            }
+            // For backward compatibility, return true for any match
+            console.log('MATCH FOUND!');
+            return true;
           }
-          
-          // For backward compatibility, return true for any match
-          console.log('MATCH FOUND!');
-          return true;
         }
       }
     }
@@ -298,7 +454,7 @@ function UserEventsPage() {
   };
 
   // New function to check if user booked today (regardless of event)
-  const hasUserBookedToday = (eventId) => {
+  const hasUserBookedToday = (eventId, eventDate) => {
     if (!user || !userBookings || userBookings.length === 0) {
       return false;
     }
@@ -323,16 +479,38 @@ function UserEventsPage() {
         return false;
       }
       
+      // If eventDate is provided, also check if the booking is for the same date
+      if (eventDate) {
+        const bookingEventDate = booking.eventDate;
+        if (bookingEventDate) {
+          let bookingDate;
+          if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
+            bookingDate = bookingEventDate.toDate();
+          } else if (bookingEventDate instanceof Date) {
+            bookingDate = bookingEventDate;
+          } else {
+            bookingDate = new Date(bookingEventDate);
+          }
+          
+          // Compare dates
+          const eventDateObj = new Date(eventDate);
+          if (bookingDate.toDateString() !== eventDateObj.toDateString()) {
+            // Different date, so not the same event instance
+            return false;
+          }
+        }
+      }
+      
       // Now check if the booking was made today
-      const bookingDate = booking.bookingDate || booking.createdAt;
-      if (bookingDate) {
+      const bookingCreationDate = booking.bookingDate || booking.createdAt;
+      if (bookingCreationDate) {
         let bookingTime;
-        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-          bookingTime = bookingDate.toDate();
-        } else if (bookingDate instanceof Date) {
-          bookingTime = bookingDate;
+        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+          bookingTime = bookingCreationDate.toDate();
+        } else if (bookingCreationDate instanceof Date) {
+          bookingTime = bookingCreationDate;
         } else {
-          bookingTime = new Date(bookingDate);
+          bookingTime = new Date(bookingCreationDate);
         }
         
         bookingTime.setHours(0, 0, 0, 0);
@@ -344,6 +522,46 @@ function UserEventsPage() {
     });
   };
 
+  // Function to check for today's bookings from localStorage (immediate feedback after payment)
+  const checkTodaysBookingFromStorage = (eventId) => {
+    const latestBooking = localStorage.getItem('latestBooking');
+    if (latestBooking) {
+      try {
+        const booking = JSON.parse(latestBooking);
+        const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
+        const targetEventId = String(eventId);
+        
+        if (String(bookingEventId) === targetEventId) {
+          // Check if this booking was made today
+          const bookingDate = booking.bookingDate || booking.createdAt || booking.timestamp;
+          if (bookingDate) {
+            let bookingTime;
+            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+              bookingTime = bookingDate.toDate();
+            } else if (bookingDate instanceof Date) {
+              bookingTime = bookingDate;
+            } else if (typeof bookingDate === 'string' || typeof bookingDate === 'number') {
+              bookingTime = new Date(bookingDate);
+            } else {
+              bookingTime = new Date(bookingDate);
+            }
+            
+            if (!isNaN(bookingTime.getTime())) {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              bookingTime.setHours(0, 0, 0, 0);
+              
+              return bookingTime.getTime() === today.getTime();
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing latest booking from localStorage:', e);
+      }
+    }
+    return false;
+  };
+
   const handleRegister = async (event) => {
     if (!user) {
       navigate('/signup');
@@ -353,6 +571,12 @@ function UserEventsPage() {
     if (!user.phoneNumber) {
       alert('To book a free trial, please update your profile with a phone number.');
       navigate('/profile');
+      return;
+    }
+
+    // Check if bookings are closed
+    if (isBookingClosed(event)) {
+      alert('Bookings for this event are currently closed.');
       return;
     }
 
@@ -369,53 +593,11 @@ function UserEventsPage() {
     // to navigate directly to the plans page
   };
 
-  // Function to set event reminder notification preference
-  const setEventReminder = async (event) => {
-    if (!user) {
-      alert('You must be logged in to set reminders.');
-      return;
-    }
-
-    try {
-      // Check if user has already set a reminder for this event
-      const hasReminder = notificationPreferences[event.id];
-      
-      if (hasReminder) {
-        // Remove existing reminder
-        setNotificationPreferences(prev => ({ ...prev, [event.id]: false }));
-        // In a full implementation, you would also remove the notification from Firestore
-        alert('Reminder removed for this event.');
-      } else {
-        // Set new reminder
-        setNotificationPreferences(prev => ({ ...prev, [event.id]: true }));
-        
-        // Create a notification in Firestore for the user
-        const notificationData = {
-          userId: user.uid,
-          title: 'Event Reminder',
-          message: `Don't forget about your upcoming event: ${event.title}`,
-          eventName: event.title,
-          eventId: event.id,
-          eventDate: event.date,
-          createdAt: new Date(),
-          read: false
-        };
-
-        // Add the notification to the notifications collection
-        await addDoc(collection(db, 'notifications'), notificationData);
-        
-        alert('Reminder set! You will receive a notification before the event.');
-      }
-    } catch (err) {
-      console.error('Error setting reminder:', err);
-      alert('Failed to set reminder. Please try again.');
-    }
-  };
-
   // Calculate progress percentage
   const getProgressPercentage = (participants, maxParticipants) => {
     return Math.min(100, (participants / maxParticipants) * 100);
   };
+
 
   if (loading) {
     return (
@@ -445,40 +627,18 @@ function UserEventsPage() {
 
   return (
     <div className="events-page">
+      <DashboardNav />
       <div className="events-container">
         <div className="events-header">
           <h1>Weekly Community Run</h1>
           <p>Join our community runs and be part of something amazing!</p>
           {/* Add refresh button with clean styling */}
-          <button 
-            onClick={() => {
-              setLastRefresh(Date.now());
-              fetchMainEvent(); // Also refresh the main event
-            }}
-            className="refresh-btn"
-            style={{
-              background: 'transparent',
-              color: '#F15A24',
-              border: '1px solid #F15A24',
-              padding: '8px 16px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginTop: '10px',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.background = '#F15A24';
-              e.target.style.color = 'white';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#F15A24';
-            }}
-          >
-            Refresh Bookings
-          </button>
+        </div>
+
+        {/* Section Header (New) */}
+        <div className="section-header">
+          <h2>Your Events</h2>
+          <p>Manage your upcoming and past event bookings</p>
         </div>
 
         {/* Tab Navigation */}
@@ -512,7 +672,9 @@ function UserEventsPage() {
                           e.target.src = '/upcoming-events.jpeg';
                         }}
                       />
-                      <div className="event-status-badge">{event.status || 'Open'}</div>
+                      <div className="event-status-badge">
+                        {isBookingClosed(event) ? 'Bookings Closed' : (event.status || 'Open')}
+                      </div>
                     </div>
                     
                     <div className="event-details">
@@ -553,20 +715,19 @@ function UserEventsPage() {
                         <button 
                           className="register-btn"
                           onClick={() => handleRegister(event)}
+                          disabled={hasUserBookedEvent(event.id, event.date) || 
+                                   checkTodaysBookingFromStorage(event.id) || 
+                                   isBookingClosed(event) ||
+                                   hasBookedThisWeek('Pay-Per-Run') ||
+                                   hasBookedThisWeek('Monthly Membership')}
                         >
-                          {hasUserBookedToday(event.id) ? 'Already Booked Today' : 
-                           hasUserBookedEvent(event.id) ? 'Already Booked' : 
+                          {isBookingClosed(event) ? 'Bookings Closed' :
+                           checkTodaysBookingFromStorage(event.id) ? 'Already Booked Today' : 
+                           hasUserBookedToday(event.id, event.date) ? 'Already Booked Today' : 
+                           hasUserBookedEvent(event.id, event.date) ? 'Already Booked' : 
+                           (hasBookedThisWeek('Pay-Per-Run') || hasBookedThisWeek('Monthly Membership')) ? 'Already Booked' :
                            'Book Your Slot'}
                         </button>
-                        
-                        {hasUserBookedEvent(event.id) && (
-                          <button 
-                            className={`reminder-btn ${notificationPreferences[event.id] ? 'active' : ''}`}
-                            onClick={() => setEventReminder(event)}
-                          >
-                            {notificationPreferences[event.id] ? 'Remove Reminder' : 'Set Reminder'}
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
