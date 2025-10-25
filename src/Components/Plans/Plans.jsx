@@ -422,6 +422,104 @@ const Plans = () => {
     setSelectedPlan(null);
   };
 
+  // Handle free trial booking directly
+  const handleFreeTrialBooking = async () => {
+    try {
+      const user = getCurrentUser();
+      if (!user) {
+        // If no user, redirect to signup
+        setShowSignUpNotification(true);
+        return;
+      }
+
+      // Check eligibility first
+      if (!isEligibleForFreeTrial) {
+        showNotification("You've already claimed your free trial. Upgrade to a paid plan for continued access.", 'info');
+        return;
+      }
+
+      // Get the selected event from localStorage if it exists
+      const selectedEventStr = localStorage.getItem('selectedEvent');
+      let eventInfo = null;
+      if (selectedEventStr) {
+        try {
+          eventInfo = JSON.parse(selectedEventStr);
+        } catch (e) {
+          console.error('Error parsing selected event:', e);
+        }
+      }
+
+      // Prepare booking data for free trial
+      const bookingData = {
+        eventName: eventInfo ? eventInfo.name || eventInfo.title : "Free Trial",
+        eventId: eventInfo ? String(eventInfo.id) : "free_trial",
+        eventDate: eventInfo ? new Date(eventInfo.date) : new Date(),
+        eventTime: eventInfo ? eventInfo.time : '',
+        eventLocation: eventInfo ? eventInfo.location : '',
+        status: 'confirmed',
+        amount: 0, // Free trial
+        paymentId: 'free_trial_' + Date.now(),
+        mode: 'free_trial',
+        userId: user.uid,
+        userEmail: user.email,
+        userName: user.name,
+        phoneNumber: user.phoneNumber,
+        bookingDate: new Date()
+      };
+
+      // Create the booking in Firestore
+      const result = await firebaseService.createBooking(user.uid, bookingData);
+      console.log('Free trial booking created successfully with ID:', result.bookingId);
+
+      // Add the booking ID to the booking data for storage
+      const bookingDataWithId = {
+        ...bookingData,
+        id: result.bookingId
+      };
+
+      // Clear the selected event from localStorage
+      localStorage.removeItem('selectedEvent');
+
+      // Set flags in localStorage to indicate that bookings should be refreshed
+      localStorage.setItem('refreshBookings', 'true');
+      localStorage.setItem('newBooking', JSON.stringify(bookingDataWithId));
+      localStorage.setItem('eventsUpdated', 'true');
+
+      // Store booking data for ticket display
+      localStorage.setItem('latestBooking', JSON.stringify(bookingDataWithId));
+
+      // Store in a global key that both pages will check
+      localStorage.setItem('latestEventBooking', JSON.stringify({
+        eventId: bookingData.eventId,
+        bookingId: result.bookingId,
+        timestamp: Date.now()
+      }));
+
+      // Update eventBookings in localStorage to include the new booking
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      const updatedBookings = [...localBookings, bookingDataWithId];
+      localStorage.setItem('eventBookings', JSON.stringify(updatedBookings));
+
+      // Set the purchased plan
+      setPurchasedPlan("Free Trial");
+
+      // Close the plan notification
+      setShowPlanNotification(false);
+      setSelectedPlan(null);
+
+      // Show success notification
+      showNotification('Free trial booked successfully! Enjoy your session.', 'success');
+
+      // Redirect to dashboard where user can see their ticket
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating free trial booking:', error);
+      showNotification('Failed to book free trial. Please try again.', 'error');
+    }
+  };
+
   const handlePayNow = (plan) => {
     // Check if we're on the landing page or user page/dashboard
     // More reliable detection using the specific class
@@ -439,9 +537,9 @@ const Plans = () => {
           showNotification("You've already claimed your free trial. Upgrade to a paid plan for continued access.", 'info');
           return;
         }
-        // For eligible users, show the plan notification
+        // For eligible users, directly create the free trial booking
         setSelectedPlan(plan);
-        setShowPlanNotification(true);
+        handleFreeTrialBooking();
       } else {
         // For paid plans in dashboard, go directly to payment WITHOUT showing any notification
         setSelectedPlan(plan);
@@ -585,7 +683,7 @@ const Plans = () => {
         />
       )}
       
-      {showPlanNotification && selectedPlan && (
+      {showPlanNotification && selectedPlan && !selectedPlan.freeTrial && (
         <PlanNotification
           plan={selectedPlan}
           onSignUpClick={handleSignUpClick}
