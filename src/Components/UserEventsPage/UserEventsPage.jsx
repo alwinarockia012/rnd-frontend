@@ -165,6 +165,95 @@ function UserEventsPage() {
     };
   }, [user]);
 
+  // Function to check if user is eligible for free trial
+  const checkFreeTrialEligibility = async (userId, phoneNumber) => {
+    try {
+      // Check if user has ANY existing free trial bookings (not just within 24 hours)
+      const bookingsRef = collection(db, 'bookings');
+      const userQuery = query(bookingsRef, where('userId', '==', userId), where('mode', '==', 'free_trial'));
+      
+      // Create a promise with timeout for the user query
+      const userQueryWithTimeout = new Promise(async (resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Timeout while checking user bookings'));
+        }, 10000); // 10 second timeout
+        
+        try {
+          const result = await getDocs(userQuery);
+          clearTimeout(timeoutId);
+          resolve(result);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      });
+      
+      const userQuerySnapshot = await userQueryWithTimeout;
+      
+      // If user has any free trial bookings, they're not eligible
+      if (!userQuerySnapshot.empty) {
+        return false;
+      }
+      
+      // Check if phone number has been used for ANY free trial (not just within 24 hours)
+      if (phoneNumber) {
+        // Normalize phone number to E.164 format before comparison
+        // Firebase Auth stores phone numbers in E.164 format (+91XXXXXXXXXX)
+        // But our Firestore user profile stores it in 10-digit format (XXXXXXXXXX)
+        let normalizedPhone = phoneNumber;
+        
+        // If it's already in E.164 format, use it as is
+        if (phoneNumber.startsWith('+91') && phoneNumber.length === 13) {
+          normalizedPhone = phoneNumber;
+        } 
+        // If it's in 10-digit format, convert to E.164
+        else if (phoneNumber.length === 10 && /^\d+$/.test(phoneNumber)) {
+          normalizedPhone = '+91' + phoneNumber;
+        }
+        // If it's in any other format, try to extract digits and convert
+        else {
+          const digitsOnly = phoneNumber.replace(/\D/g, '');
+          if (digitsOnly.length === 10) {
+            normalizedPhone = '+91' + digitsOnly;
+          } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+            normalizedPhone = '+' + digitsOnly;
+          }
+        }
+        
+        const phoneQuery = query(bookingsRef, where('phoneNumber', '==', normalizedPhone), where('mode', '==', 'free_trial'));
+        
+        // Create a promise with timeout for the phone query
+        const phoneQueryWithTimeout = new Promise(async (resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            reject(new Error('Timeout while checking phone number'));
+          }, 10000); // 10 second timeout
+          
+          try {
+            const result = await getDocs(phoneQuery);
+            clearTimeout(timeoutId);
+            resolve(result);
+          } catch (error) {
+            clearTimeout(timeoutId);
+            reject(error);
+          }
+        });
+        
+        const phoneQuerySnapshot = await phoneQueryWithTimeout;
+        
+        // If phone number has been used for any free trial, they're not eligible
+        if (!phoneQuerySnapshot.empty) {
+          return false;
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking free trial eligibility:', error);
+      // On error (including timeout), default to eligible
+      return true;
+    }
+  };
+
   const fetchEvents = async () => {
     try {
       setLoading(true);

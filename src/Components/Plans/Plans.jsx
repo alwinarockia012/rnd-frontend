@@ -53,7 +53,7 @@ const Plans = () => {
 
   const checkFreeTrialEligibility = useCallback(async (userId, phoneNumber) => {
     try {
-      // Check if user has any existing free trial bookings within the last 24 hours
+      // Check if user has ANY existing free trial bookings (not just within 24 hours)
       const bookingsRef = collection(db, 'bookings');
       const userQuery = query(bookingsRef, where('userId', '==', userId), where('mode', '==', 'free_trial'));
       
@@ -75,32 +75,38 @@ const Plans = () => {
       
       const userQuerySnapshot = await userQueryWithTimeout;
       
+      // If user has any free trial bookings, they're not eligible
       if (!userQuerySnapshot.empty) {
-        // Check if any free trial booking is within the last 24 hours
-        const twentyFourHoursAgo = new Date();
-        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-        
-        const hasRecentFreeTrial = userQuerySnapshot.docs.some(doc => {
-          const bookingData = doc.data();
-          const bookingDate = bookingData.bookingDate;
-          
-          if (bookingDate && typeof bookingDate.toDate === 'function') {
-            return bookingDate.toDate() > twentyFourHoursAgo;
-          } else if (bookingDate instanceof Date) {
-            return bookingDate > twentyFourHoursAgo;
-          } else {
-            const date = new Date(bookingDate);
-            return date > twentyFourHoursAgo;
-          }
-        });
-        
-        setIsEligibleForFreeTrial(!hasRecentFreeTrial);
-        return !hasRecentFreeTrial;
+        setIsEligibleForFreeTrial(false);
+        return false;
       }
       
-      // Check if phone number has been used for a free trial within the last 24 hours
+      // Check if phone number has been used for ANY free trial (not just within 24 hours)
       if (phoneNumber) {
-        const phoneQuery = query(bookingsRef, where('phoneNumber', '==', phoneNumber), where('mode', '==', 'free_trial'));
+        // Normalize phone number to E.164 format before comparison
+        // Firebase Auth stores phone numbers in E.164 format (+91XXXXXXXXXX)
+        // But our Firestore user profile stores it in 10-digit format (XXXXXXXXXX)
+        let normalizedPhone = phoneNumber;
+        
+        // If it's already in E.164 format, use it as is
+        if (phoneNumber.startsWith('+91') && phoneNumber.length === 13) {
+          normalizedPhone = phoneNumber;
+        } 
+        // If it's in 10-digit format, convert to E.164
+        else if (phoneNumber.length === 10 && /^\d+$/.test(phoneNumber)) {
+          normalizedPhone = '+91' + phoneNumber;
+        }
+        // If it's in any other format, try to extract digits and convert
+        else {
+          const digitsOnly = phoneNumber.replace(/\D/g, '');
+          if (digitsOnly.length === 10) {
+            normalizedPhone = '+91' + digitsOnly;
+          } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+            normalizedPhone = '+' + digitsOnly;
+          }
+        }
+        
+        const phoneQuery = query(bookingsRef, where('phoneNumber', '==', normalizedPhone), where('mode', '==', 'free_trial'));
         
         // Create a promise with timeout for the phone query
         const phoneQueryWithTimeout = new Promise(async (resolve, reject) => {
@@ -120,28 +126,10 @@ const Plans = () => {
         
         const phoneQuerySnapshot = await phoneQueryWithTimeout;
         
+        // If phone number has been used for any free trial, they're not eligible
         if (!phoneQuerySnapshot.empty) {
-          // Check if any free trial booking is within the last 24 hours
-          const twentyFourHoursAgo = new Date();
-          twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-          
-          const hasRecentFreeTrial = phoneQuerySnapshot.docs.some(doc => {
-            const bookingData = doc.data();
-            const bookingDate = bookingData.bookingDate;
-            
-            if (bookingDate && typeof bookingDate.toDate === 'function') {
-              return bookingDate.toDate() > twentyFourHoursAgo;
-            } else if (bookingDate instanceof Date) {
-              return bookingDate > twentyFourHoursAgo;
-            } else {
-              const date = new Date(bookingDate);
-              return date > twentyFourHoursAgo;
-            }
-          });
-          
-          const eligible = !hasRecentFreeTrial;
-          setIsEligibleForFreeTrial(eligible);
-          return eligible;
+          setIsEligibleForFreeTrial(false);
+          return false;
         }
       }
       
@@ -250,11 +238,12 @@ const Plans = () => {
       if (currentUser) {
         // Check if we're on the dashboard page
         const isOnDashboard = document.querySelector('.plans-page') !== null;
-        if (isOnDashboard) {
-          // Only check eligibility on dashboard pages
-          try {
-            await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
-            
+        // Check eligibility on both landing page and dashboard pages
+        try {
+          await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
+          
+          // Only check for recent bookings on dashboard pages
+          if (isOnDashboard) {
             // Check if there's a recent booking to set purchasedPlan
             const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
             if (localBookings.length > 0) {
@@ -279,10 +268,10 @@ const Plans = () => {
               // No bookings, reset purchased plan
               setPurchasedPlan(null);
             }
-          } catch (error) {
-            console.error('Error in useEffect while checking eligibility:', error);
-            showNotification("There was an issue checking your plan eligibility. Please refresh the page.", 'error');
           }
+        } catch (error) {
+          console.error('Error in useEffect while checking eligibility:', error);
+          showNotification("There was an issue checking your plan eligibility. Please refresh the page.", 'error');
         }
       } else {
         // Reset eligibility for non-logged in users
@@ -498,6 +487,12 @@ const Plans = () => {
       }
 
       // Prepare booking data for free trial
+      // Normalize phone number to E.164 format for consistency
+      let normalizedPhone = user.phoneNumber || '';
+      if (normalizedPhone && !normalizedPhone.startsWith('+91') && normalizedPhone.length === 10 && /^\d+$/.test(normalizedPhone)) {
+        normalizedPhone = '+91' + normalizedPhone;
+      }
+      
       const bookingData = {
         eventName: eventInfo ? eventInfo.name || eventInfo.title : "Free Trial",
         eventId: eventInfo ? String(eventInfo.id) : "free_trial",
@@ -511,7 +506,7 @@ const Plans = () => {
         userId: user.uid,
         userEmail: user.email,
         userName: user.name,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: normalizedPhone,
         bookingDate: new Date()
       };
 

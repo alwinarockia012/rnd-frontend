@@ -117,10 +117,33 @@ const Payments = () => {
         return false;
       }
       
+      // Normalize phone number to E.164 format before comparison
+      // Firebase Auth stores phone numbers in E.164 format (+91XXXXXXXXXX)
+      // But our Firestore user profile stores it in 10-digit format (XXXXXXXXXX)
+      let normalizedPhone = phoneNumber;
+      
+      // If it's already in E.164 format, use it as is
+      if (phoneNumber.startsWith('+91') && phoneNumber.length === 13) {
+        normalizedPhone = phoneNumber;
+      } 
+      // If it's in 10-digit format, convert to E.164
+      else if (phoneNumber.length === 10 && /^\d+$/.test(phoneNumber)) {
+        normalizedPhone = '+91' + phoneNumber;
+      }
+      // If it's in any other format, try to extract digits and convert
+      else {
+        const digitsOnly = phoneNumber.replace(/\D/g, '');
+        if (digitsOnly.length === 10) {
+          normalizedPhone = '+91' + digitsOnly;
+        } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+          normalizedPhone = '+' + digitsOnly;
+        }
+      }
+      
       // Check if phone number has been used for a free trial
       const phoneQuery = query(
         bookingsRef,
-        where('phoneNumber', '==', phoneNumber)
+        where('phoneNumber', '==', normalizedPhone)
       );
       const phoneQuerySnapshot = await getDocs(phoneQuery);
       
@@ -164,6 +187,12 @@ const Payments = () => {
       const eventId = String(event.id);
       console.log('Creating booking for event ID:', eventId);
       
+      // Normalize phone number to E.164 format for consistency
+      let normalizedPhone = user.phoneNumber || '';
+      if (normalizedPhone && !normalizedPhone.startsWith('+91') && normalizedPhone.length === 10 && /^\d+$/.test(normalizedPhone)) {
+        normalizedPhone = '+91' + normalizedPhone;
+      }
+      
       const bookingData = {
         userId: user.uid,
         eventId: eventId, // Ensure eventId is stored as string
@@ -173,7 +202,7 @@ const Payments = () => {
         eventLocation: event.location,
         userName: user.name || user.displayName,
         userEmail: user.email,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: normalizedPhone,
         bookingDate: new Date(), // This will be a Date object
         status: 'confirmed',
         isFreeTrial: isEligibleForFreeTrial,
@@ -247,6 +276,12 @@ const Payments = () => {
       const eventId = String(event.id);
       console.log('Creating booking for event ID:', eventId);
       
+      // Normalize phone number to E.164 format for consistency
+      let normalizedPhone = user.phoneNumber || '';
+      if (normalizedPhone && !normalizedPhone.startsWith('+91') && normalizedPhone.length === 10 && /^\d+$/.test(normalizedPhone)) {
+        normalizedPhone = '+91' + normalizedPhone;
+      }
+      
       const bookingData = {
         userId: user.uid,
         eventId: eventId,
@@ -256,7 +291,7 @@ const Payments = () => {
         eventLocation: event.location,
         userName: user.name || user.displayName,
         userEmail: user.email,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: normalizedPhone,
         bookingDate: new Date(),
         status: 'confirmed',
         isFreeTrial: false, // This is a paid booking
