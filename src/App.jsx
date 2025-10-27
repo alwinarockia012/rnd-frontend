@@ -26,9 +26,6 @@ import Payments from './Components/Payments/Payments';
 import UserEventsPage from './Components/UserEventsPage/UserEventsPage';
 import NotificationsPage from './Components/Notifications/NotificationsPage';
 import TicketVerification from './Components/TicketVerification/TicketVerification';
-import NotificationTest from './Components/NotificationTest';
-import NotificationColorTest from './Components/NotificationColorTest';
-import RecaptchaTest from './Components/RecaptchaTest';
 // Import the new PlansPage component
 import PlansPage from './Components/Plans/PlansPage';
 
@@ -160,9 +157,6 @@ function App() {
           <Route path="/user-events" element={<UserEventsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/ticket" element={<TicketVerification />} />
-          <Route path="/notification-test" element={<NotificationTest />} />
-          <Route path="/notification-color-test" element={<NotificationColorTest />} />
-          <Route path="/recaptcha-test" element={<RecaptchaTest />} />
           {/* Add the new Plans route */}
           <Route path="/plans" element={<PlansPage />} />
         </Routes>

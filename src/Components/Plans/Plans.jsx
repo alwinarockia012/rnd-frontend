@@ -12,6 +12,35 @@ import PaymentButton from '../Payments/PaymentButton';
 import { getCurrentUser } from '../../services/paymentService';
 import firebaseService from '../../services/firebaseService';
 
+// Utility function to check if an event date has passed
+const isEventDatePassed = (eventDate) => {
+  if (!eventDate) return false;
+  
+  let eventTime;
+  if (eventDate.toDate && typeof eventDate.toDate === 'function') {
+    eventTime = eventDate.toDate();
+  } else if (eventDate instanceof Date) {
+    eventTime = eventDate;
+  } else {
+    eventTime = new Date(eventDate);
+  }
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  eventTime.setHours(0, 0, 0, 0);
+  
+  return eventTime < today;
+};
+
+// Utility function to check if a booking is still valid (event hasn't passed)
+const isBookingStillValid = (booking) => {
+  // If there's no event date, consider it valid
+  if (!booking.eventDate) return true;
+  
+  // Check if the event date has passed
+  return !isEventDatePassed(booking.eventDate);
+};
+
 const Plans = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -24,9 +53,9 @@ const Plans = () => {
 
   const checkFreeTrialEligibility = useCallback(async (userId, phoneNumber) => {
     try {
-      // Check if user has any existing bookings within the last week
+      // Check if user has any existing free trial bookings within the last 24 hours
       const bookingsRef = collection(db, 'bookings');
-      const userQuery = query(bookingsRef, where('userId', '==', userId));
+      const userQuery = query(bookingsRef, where('userId', '==', userId), where('mode', '==', 'free_trial'));
       
       // Create a promise with timeout for the user query
       const userQueryWithTimeout = new Promise(async (resolve, reject) => {
@@ -47,31 +76,31 @@ const Plans = () => {
       const userQuerySnapshot = await userQueryWithTimeout;
       
       if (!userQuerySnapshot.empty) {
-        // Check if any booking is within the last week (7 days)
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        // Check if any free trial booking is within the last 24 hours
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
         
-        const hasRecentBooking = userQuerySnapshot.docs.some(doc => {
+        const hasRecentFreeTrial = userQuerySnapshot.docs.some(doc => {
           const bookingData = doc.data();
           const bookingDate = bookingData.bookingDate;
           
           if (bookingDate && typeof bookingDate.toDate === 'function') {
-            return bookingDate.toDate() > oneWeekAgo;
+            return bookingDate.toDate() > twentyFourHoursAgo;
           } else if (bookingDate instanceof Date) {
-            return bookingDate > oneWeekAgo;
+            return bookingDate > twentyFourHoursAgo;
           } else {
             const date = new Date(bookingDate);
-            return date > oneWeekAgo;
+            return date > twentyFourHoursAgo;
           }
         });
         
-        setIsEligibleForFreeTrial(!hasRecentBooking);
-        return !hasRecentBooking;
+        setIsEligibleForFreeTrial(!hasRecentFreeTrial);
+        return !hasRecentFreeTrial;
       }
       
-      // Check if phone number has been used for a free trial within the last week
+      // Check if phone number has been used for a free trial within the last 24 hours
       if (phoneNumber) {
-        const phoneQuery = query(bookingsRef, where('phoneNumber', '==', phoneNumber));
+        const phoneQuery = query(bookingsRef, where('phoneNumber', '==', phoneNumber), where('mode', '==', 'free_trial'));
         
         // Create a promise with timeout for the phone query
         const phoneQueryWithTimeout = new Promise(async (resolve, reject) => {
@@ -92,25 +121,25 @@ const Plans = () => {
         const phoneQuerySnapshot = await phoneQueryWithTimeout;
         
         if (!phoneQuerySnapshot.empty) {
-          // Check if any booking is within the last week (7 days)
-          const oneWeekAgo = new Date();
-          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          // Check if any free trial booking is within the last 24 hours
+          const twentyFourHoursAgo = new Date();
+          twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
           
-          const hasRecentBooking = phoneQuerySnapshot.docs.some(doc => {
+          const hasRecentFreeTrial = phoneQuerySnapshot.docs.some(doc => {
             const bookingData = doc.data();
             const bookingDate = bookingData.bookingDate;
             
             if (bookingDate && typeof bookingDate.toDate === 'function') {
-              return bookingDate.toDate() > oneWeekAgo;
+              return bookingDate.toDate() > twentyFourHoursAgo;
             } else if (bookingDate instanceof Date) {
-              return bookingDate > oneWeekAgo;
+              return bookingDate > twentyFourHoursAgo;
             } else {
               const date = new Date(bookingDate);
-              return date > oneWeekAgo;
+              return date > twentyFourHoursAgo;
             }
           });
           
-          const eligible = !hasRecentBooking;
+          const eligible = !hasRecentFreeTrial;
           setIsEligibleForFreeTrial(eligible);
           return eligible;
         }
@@ -127,8 +156,8 @@ const Plans = () => {
     }
   }, []);
 
-  // Function to check if user has booked this week or month based on plan
-  const hasBookedThisWeek = useCallback((planName) => {
+  // Function to check if user has booked within the last 24 hours based on plan (excluding free trials)
+  const hasBookedRecently = useCallback((planName) => {
     // Get bookings from localStorage
     const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
     
@@ -136,66 +165,23 @@ const Plans = () => {
       return false;
     }
     
-    // Get today's date for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get current time for comparison
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
     
-    // For Monthly Membership, check if booked this month
-    if (planName === 'Monthly Membership') {
-      // Get start of month
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      
-      // Get end of month
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      endOfMonth.setHours(23, 59, 59, 999);
-      
-      // Check if any booking was made this month for Monthly Membership
-      return localBookings.some(booking => {
-        // Check if booking is for Monthly Membership
-        if (booking.eventName !== 'Monthly Membership') {
-          return false;
-        }
-        
-        // Check if booking was made this month
-        const bookingDate = booking.bookingDate || booking.createdAt;
-        if (bookingDate) {
-          let bookingTime;
-          if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-            bookingTime = bookingDate.toDate();
-          } else if (bookingDate instanceof Date) {
-            bookingTime = bookingDate;
-          } else {
-            bookingTime = new Date(bookingDate);
-          }
-          
-          return bookingTime >= startOfMonth && bookingTime <= endOfMonth;
-        }
-        
-        return false;
-      });
-    }
-    
-    // For Pay-Per-Run, check if booked this week
-    // Get current week start (Monday)
-    const dayOfWeek = today.getDay();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); // Adjust when Sunday (0)
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    // Get end of week (Sunday)
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-    
-    // Check if any booking was made this week for Pay-Per-Run
+    // Check if any booking was made within the last 24 hours for this plan (excluding free trials)
     return localBookings.some(booking => {
+      // Skip free trial bookings
+      if (booking.mode === 'free_trial') {
+        return false;
+      }
+      
       // Check if booking matches the plan name
       if (booking.eventName !== planName) {
         return false;
       }
       
-      // First check if booking was made today (immediate feedback)
+      // Check if booking was made within the last 24 hours
       const bookingDate = booking.bookingDate || booking.createdAt;
       if (bookingDate) {
         let bookingTime;
@@ -207,24 +193,15 @@ const Plans = () => {
           bookingTime = new Date(bookingDate);
         }
         
-        // Set time to beginning of day for comparison
-        bookingTime.setHours(0, 0, 0, 0);
-        
-        // If booking was made today, return true immediately
-        if (bookingTime.getTime() === today.getTime()) {
-          return true;
-        }
-        
-        // Otherwise check if booking was made this week
-        return bookingTime >= startOfWeek && bookingTime <= endOfWeek;
+        return bookingTime >= twentyFourHoursAgo && bookingTime <= now;
       }
       
       return false;
     });
   }, []);
 
-  // Function to check if user has booked a monthly plan
-  const hasBookedMonthly = useCallback(() => {
+  // Function to check if user has booked a monthly plan within the last 24 hours (excluding free trials)
+  const hasBookedMonthlyRecently = useCallback(() => {
     // Get bookings from localStorage
     const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
     
@@ -232,26 +209,23 @@ const Plans = () => {
       return false;
     }
     
-    // Get today's date for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get current time for comparison
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
     
-    // Get start of month
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    
-    // Get end of month
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    endOfMonth.setHours(23, 59, 59, 999);
-    
-    // Check if any booking was made this month for Monthly Membership only
+    // Check if any booking was made within the last 24 hours for Monthly Membership (excluding free trials)
     return localBookings.some(booking => {
+      // Skip free trial bookings
+      if (booking.mode === 'free_trial') {
+        return false;
+      }
+      
       // Check if booking is for Monthly Membership
       if (booking.eventName !== 'Monthly Membership') {
         return false;
       }
       
-      // Check if booking was made this month
+      // Check if booking was made within the last 24 hours
       const bookingDate = booking.bookingDate || booking.createdAt;
       if (bookingDate) {
         let bookingTime;
@@ -263,7 +237,7 @@ const Plans = () => {
           bookingTime = new Date(bookingDate);
         }
         
-        return bookingTime >= startOfMonth && bookingTime <= endOfMonth;
+        return bookingTime >= twentyFourHoursAgo && bookingTime <= now;
       }
       
       return false;
@@ -284,15 +258,26 @@ const Plans = () => {
             // Check if there's a recent booking to set purchasedPlan
             const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
             if (localBookings.length > 0) {
-              // Get the most recent booking
-              const mostRecentBooking = localBookings.reduce((latest, current) => {
-                const latestDate = new Date(latest.bookingDate || latest.createdAt);
-                const currentDate = new Date(current.bookingDate || current.createdAt);
-                return currentDate > latestDate ? current : latest;
-              });
+              // Filter out passed events
+              const activeBookings = localBookings.filter(booking => !isEventDatePassed(booking.eventDate));
               
-              // Set the purchased plan based on the most recent booking
-              setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
+              if (activeBookings.length > 0) {
+                // Get the most recent active booking
+                const mostRecentBooking = activeBookings.reduce((latest, current) => {
+                  const latestDate = new Date(latest.bookingDate || latest.createdAt);
+                  const currentDate = new Date(current.bookingDate || current.createdAt);
+                  return currentDate > latestDate ? current : latest;
+                });
+                
+                // Set the purchased plan based on the most recent active booking
+                setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
+              } else {
+                // All events have passed, reset purchased plan
+                setPurchasedPlan(null);
+              }
+            } else {
+              // No bookings, reset purchased plan
+              setPurchasedPlan(null);
             }
           } catch (error) {
             console.error('Error in useEffect while checking eligibility:', error);
@@ -307,22 +292,85 @@ const Plans = () => {
     });
 
     return () => unsubscribe();
-  }, [checkFreeTrialEligibility, hasBookedThisWeek, bookingsUpdated]);
+  }, [checkFreeTrialEligibility, hasBookedRecently, bookingsUpdated]);
 
-  // Check for changes in bookings
+  // Check for changes in bookings and events
   useEffect(() => {
     const checkForBookingChanges = () => {
       // Update the state to trigger a re-render
       setBookingsUpdated(prev => prev + 1);
       
-      // Check if there's a new booking and reset purchasedPlan if needed
+      // Check if there's a new booking and set purchasedPlan if needed
       const newBooking = localStorage.getItem('newBooking');
       if (newBooking) {
         try {
           const booking = JSON.parse(newBooking);
+          // Set the purchased plan regardless of event date
           setPurchasedPlan(booking.eventName || 'Unknown Plan');
         } catch (e) {
           console.error('Error parsing new booking:', e);
+        }
+      }
+      
+      // Check for event updates and reset purchasedPlan if events have changed
+      const eventsUpdated = localStorage.getItem('eventsUpdated');
+      if (eventsUpdated === 'true') {
+        // Reset purchased plan when events are updated
+        setPurchasedPlan(null);
+      }
+      
+      // Check if any booked events have passed and reset purchasedPlan if so
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      if (localBookings.length > 0) {
+        // Check if any booked events have passed
+        const anyEventPassed = localBookings.some(booking => {
+          return isEventDatePassed(booking.eventDate);
+        });
+        
+        // If any events have passed, reset the purchased plan state
+        // This ensures plans reset when their associated events pass
+        if (anyEventPassed) {
+          setPurchasedPlan(null);
+        }
+      } else {
+        // No bookings, reset purchased plan
+        setPurchasedPlan(null);
+      }
+      
+      // Check if 24 hours have passed since last booking and reset purchasedPlan if so
+      const localBookings2 = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      if (localBookings2.length > 0) {
+        // Get current time
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
+        
+        // Check if all bookings are older than 24 hours
+        const allBookingsOlder = localBookings2.every(booking => {
+          // Skip free trial bookings
+          if (booking.mode === 'free_trial') {
+            return true;
+          }
+          
+          const bookingDate = booking.bookingDate || booking.createdAt;
+          if (bookingDate) {
+            let bookingTime;
+            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+              bookingTime = bookingDate.toDate();
+            } else if (bookingDate instanceof Date) {
+              bookingTime = bookingDate;
+            } else {
+              bookingTime = new Date(bookingDate);
+            }
+            
+            return bookingTime < twentyFourHoursAgo;
+          }
+          
+          return true;
+        });
+        
+        // If all bookings are older than 24 hours, reset the purchased plan state
+        if (allBookingsOlder) {
+          setPurchasedPlan(null);
         }
       }
     };
@@ -334,7 +382,7 @@ const Plans = () => {
     const interval = setInterval(checkForBookingChanges, 5000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [bookingsUpdated]);
 
   const plansData = [
     {
@@ -775,16 +823,16 @@ const Plans = () => {
               
               <div className="plan-footer">
                 <button
-                  className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''} ${!plan.freeTrial && (hasBookedThisWeek(plan.name) || purchasedPlan) ? 'disabled' : ''}`}
+                  className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''} ${!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan) ? 'disabled' : ''}`}
                   onClick={() => handlePayNow(plan)}
-                  disabled={plan.freeTrial && !isEligibleForFreeTrial || (!plan.freeTrial && (hasBookedThisWeek(plan.name) || purchasedPlan))}
+                  disabled={plan.freeTrial && !isEligibleForFreeTrial || (!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan))}
                 >
                   <span className="button-text">
                     {plan.freeTrial ? (isEligibleForFreeTrial ? "Start Free Trial" : "Already Claimed") : 
                      (purchasedPlan ? 
-                       (purchasedPlan === 'Monthly Membership' ? "Booked for a month" : "Booked for this week") : 
-                       (hasBookedThisWeek(plan.name) ? 
-                         (plan.name === 'Monthly Membership' ? "Booked for a month" : "Booked for this week") : 
+                       (purchasedPlan === 'Monthly Membership' ? "Booked for 24 hrs" : "Booked for 24 hrs") : 
+                       (hasBookedRecently(plan.name) ? 
+                         (plan.name === 'Monthly Membership' ? "Booked for 24 hrs" : "Booked for 24 hrs") : 
                          "Choose Plan"))}
                   </span>
                   <div className="button-arrow">→</div>

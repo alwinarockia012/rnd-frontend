@@ -96,6 +96,43 @@ function UserEventsPage() {
         shouldTriggerRefresh = true;
       }
       
+      // Check if 24 hours have passed since last booking and trigger refresh if so
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      if (localBookings.length > 0) {
+        // Get current time
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
+        
+        // Check if all bookings are older than 24 hours
+        const allBookingsOlder = localBookings.every(booking => {
+          // Skip free trial bookings
+          if (booking.mode === 'free_trial') {
+            return true;
+          }
+          
+          const bookingDate = booking.bookingDate || booking.createdAt;
+          if (bookingDate) {
+            let bookingTime;
+            if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+              bookingTime = bookingDate.toDate();
+            } else if (bookingDate instanceof Date) {
+              bookingTime = bookingDate;
+            } else {
+              bookingTime = new Date(bookingDate);
+            }
+            
+            return bookingTime < twentyFourHoursAgo;
+          }
+          
+          return true;
+        });
+        
+        // If all bookings are older than 24 hours, trigger refresh
+        if (allBookingsOlder) {
+          shouldTriggerRefresh = true;
+        }
+      }
+      
       // Only trigger refresh if needed
       if (shouldTriggerRefresh) {
         setLastRefresh(Date.now());
@@ -136,7 +173,7 @@ function UserEventsPage() {
         firebaseService.getPastEvents()
       ]);
       
-      // Filter to show only "Weekly Community Run" event and ensure proper ID handling
+      // Filter to show only ONE "Weekly Community Run" event and ensure proper ID handling
       const weeklyCommunityRun = upcoming.filter(event => 
         event.name && event.name.toLowerCase().includes('weekly community run')
       ).map(event => ({
@@ -144,11 +181,8 @@ function UserEventsPage() {
         id: String(event.id) // Ensure ID is a string for consistent comparison
       }));
       
-      // Use the filtered events or show all upcoming events
-      setUpcomingEvents(weeklyCommunityRun.length > 0 ? weeklyCommunityRun : upcoming.map(event => ({
-        ...event,
-        id: String(event.id) // Ensure ID is a string for consistent comparison
-      })));
+      // Use only the first event if there are multiple instances
+      const filteredUpcomingEvents = weeklyCommunityRun.length > 0 ? [weeklyCommunityRun[0]] : [];
       
       // Filter past events to show only "Weekly Community Run" events
       const pastWeeklyCommunityRun = past.filter(event => 
@@ -158,10 +192,8 @@ function UserEventsPage() {
         id: String(event.id) // Ensure ID is a string for consistent comparison
       }));
       
-      setPastEvents(pastWeeklyCommunityRun.length > 0 ? pastWeeklyCommunityRun : past.map(event => ({
-        ...event,
-        id: String(event.id) // Ensure ID is a string for consistent comparison
-      })));
+      setUpcomingEvents(filteredUpcomingEvents);
+      setPastEvents(pastWeeklyCommunityRun.length > 0 ? [pastWeeklyCommunityRun[0]] : []);
     } catch (err) {
       console.error('Error fetching events:', err);
       setError('Failed to load events. Please try again later.');
@@ -249,8 +281,8 @@ function UserEventsPage() {
     return false;
   };
 
-  // Function to check if user has booked this week or month based on plan (similar to Plans component)
-  const hasBookedThisWeek = useCallback((planName) => {
+  // Function to check if user has booked within the last 24 hours based on plan (excluding free trials)
+  const hasBookedRecently = useCallback((planName) => {
     // Get bookings from localStorage
     const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
     
@@ -258,66 +290,23 @@ function UserEventsPage() {
       return false;
     }
     
-    // Get today's date for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get current time for comparison
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
     
-    // For Monthly Membership, check if booked this month
-    if (planName === 'Monthly Membership') {
-      // Get start of month
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      
-      // Get end of month
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      endOfMonth.setHours(23, 59, 59, 999);
-      
-      // Check if any booking was made this month for Monthly Membership
-      return localBookings.some(booking => {
-        // Check if booking is for Monthly Membership
-        if (booking.eventName !== 'Monthly Membership') {
-          return false;
-        }
-        
-        // Check if booking was made this month
-        const bookingDate = booking.bookingDate || booking.createdAt;
-        if (bookingDate) {
-          let bookingTime;
-          if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-            bookingTime = bookingDate.toDate();
-          } else if (bookingDate instanceof Date) {
-            bookingTime = bookingDate;
-          } else {
-            bookingTime = new Date(bookingDate);
-          }
-          
-          return bookingTime >= startOfMonth && bookingTime <= endOfMonth;
-        }
-        
-        return false;
-      });
-    }
-    
-    // For Pay-Per-Run, check if booked this week
-    // Get current week start (Monday)
-    const dayOfWeek = today.getDay();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); // Adjust when Sunday (0)
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    // Get end of week (Sunday)
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-    
-    // Check if any booking was made this week for Pay-Per-Run
+    // Check if any booking was made within the last 24 hours for this plan (excluding free trials)
     return localBookings.some(booking => {
+      // Skip free trial bookings
+      if (booking.mode === 'free_trial') {
+        return false;
+      }
+      
       // Check if booking matches the plan name
       if (booking.eventName !== planName) {
         return false;
       }
       
-      // First check if booking was made today (immediate feedback)
+      // Check if booking was made within the last 24 hours
       const bookingDate = booking.bookingDate || booking.createdAt;
       if (bookingDate) {
         let bookingTime;
@@ -329,133 +318,16 @@ function UserEventsPage() {
           bookingTime = new Date(bookingDate);
         }
         
-        // Set time to beginning of day for comparison
-        bookingTime.setHours(0, 0, 0, 0);
-        
-        // If booking was made today, return true immediately
-        if (bookingTime.getTime() === today.getTime()) {
-          return true;
-        }
-        
-        // Otherwise check if booking was made this week
-        return bookingTime >= startOfWeek && bookingTime <= endOfWeek;
+        return bookingTime >= twentyFourHoursAgo && bookingTime <= now;
       }
       
       return false;
     });
   }, []);
 
-  // ENHANCED VERSION - Check if a user has already booked a specific event WITH DEBUGGING AND TODAY'S CHECK
-  const hasUserBookedEvent = (eventId, eventDate) => {
-    // Make sure we have user bookings data
-    if (!userBookings || userBookings.length === 0) {
-      console.log('No user bookings found');
-      return false;
-    }
-    
-    // Convert eventId to string for comparison
-    const targetEventId = String(eventId);
-    console.log('Checking if user booked event:', targetEventId);
-    console.log('User bookings data:', userBookings);
-    
-    // Get today's date for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Enhanced approach - check if any booking has this event ID
-    for (const booking of userBookings) {
-      // Check multiple possible field names and ensure consistent string comparison
-      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
-      if (bookingEventId !== undefined && bookingEventId !== null) {
-        const bookingEventIdStr = String(bookingEventId);
-        console.log('Comparing with booking event ID:', bookingEventIdStr);
-        // Use multiple comparison methods for better compatibility
-        if (bookingEventIdStr === targetEventId || 
-            bookingEventIdStr == targetEventId ||
-            bookingEventIdStr.trim() === targetEventId.trim()) {
-          
-          // If eventDate is provided, also check if the booking is for the same date
-          if (eventDate) {
-            const bookingEventDate = booking.eventDate;
-            if (bookingEventDate) {
-              let bookingDate;
-              if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
-                bookingDate = bookingEventDate.toDate();
-              } else if (bookingEventDate instanceof Date) {
-                bookingDate = bookingEventDate;
-              } else {
-                bookingDate = new Date(bookingEventDate);
-              }
-              
-              // Compare dates
-      const eventDateObj = new Date(eventDate);
-              if (bookingDate.toDateString() === eventDateObj.toDateString()) {
-                // Check if this booking was made today
-                const bookingCreationDate = booking.bookingDate || booking.createdAt;
-                if (bookingCreationDate) {
-                  let bookingTime;
-                  if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
-                    bookingTime = bookingCreationDate.toDate();
-                  } else if (bookingCreationDate instanceof Date) {
-                    bookingTime = bookingCreationDate;
-                  } else {
-                    bookingTime = new Date(bookingCreationDate);
-                  }
-                  
-                  // Set time to beginning of day for comparison
-                  bookingTime.setHours(0, 0, 0, 0);
-                  
-                  // If booking was made today, return true
-                  if (bookingTime.getTime() === today.getTime()) {
-                    console.log('MATCH FOUND FOR TODAY!');
-                    return true;
-                  }
-                }
-                
-                // For backward compatibility, return true for any match
-                console.log('MATCH FOUND!');
-                return true;
-              }
-            }
-          } else {
-            // If no eventDate provided, use original logic
-            // Check if this booking was made today
-            const bookingDate = booking.bookingDate || booking.createdAt;
-            if (bookingDate) {
-              let bookingTime;
-              if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
-                bookingTime = bookingDate.toDate();
-              } else if (bookingDate instanceof Date) {
-                bookingTime = bookingDate;
-              } else {
-                bookingTime = new Date(bookingDate);
-              }
-              
-              // Set time to beginning of day for comparison
-              bookingTime.setHours(0, 0, 0, 0);
-              
-              // If booking was made today, return true
-              if (bookingTime.getTime() === today.getTime()) {
-                console.log('MATCH FOUND FOR TODAY!');
-                return true;
-              }
-            }
-            
-            // For backward compatibility, return true for any match
-            console.log('MATCH FOUND!');
-            return true;
-          }
-        }
-      }
-    }
-    
-    console.log('No match found for event ID:', targetEventId);
-    return false;
-  };
-
   // New function to check if user booked today (regardless of event)
   const hasUserBookedToday = (eventId, eventDate) => {
-    if (!user || !userBookings || userBookings.length === 0) {
+    if (!userBookings || userBookings.length === 0) {
       return false;
     }
 
@@ -598,6 +470,113 @@ function UserEventsPage() {
     return Math.min(100, (participants / maxParticipants) * 100);
   };
 
+  // ENHANCED VERSION - Check if a user has already booked a specific event WITH DEBUGGING AND TODAY'S CHECK
+  const hasUserBookedEvent = (eventId, eventDate) => {
+    // Make sure we have user bookings data
+    if (!userBookings || userBookings.length === 0) {
+      console.log('No user bookings found');
+      return false;
+    }
+    
+    // Convert eventId to string for comparison
+    const targetEventId = String(eventId);
+    console.log('Checking if user booked event:', targetEventId);
+    console.log('User bookings data:', userBookings);
+    
+    // Get today's date for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Enhanced approach - check if any booking has this event ID
+    for (const booking of userBookings) {
+      // Check multiple possible field names and ensure consistent string comparison
+      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
+      if (bookingEventId !== undefined && bookingEventId !== null) {
+        const bookingEventIdStr = String(bookingEventId);
+        console.log('Comparing with booking event ID:', bookingEventIdStr);
+        // Use multiple comparison methods for better compatibility
+        if (bookingEventIdStr === targetEventId || 
+            bookingEventIdStr == targetEventId ||
+            bookingEventIdStr.trim() === targetEventId.trim()) {
+          
+          // If eventDate is provided, also check if the booking is for the same date
+          if (eventDate) {
+            const bookingEventDate = booking.eventDate;
+            if (bookingEventDate) {
+              let bookingDate;
+              if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
+                bookingDate = bookingEventDate.toDate();
+              } else if (bookingEventDate instanceof Date) {
+                bookingDate = bookingEventDate;
+              } else {
+                bookingDate = new Date(bookingEventDate);
+              }
+              
+              // Compare dates
+              const eventDateObj = new Date(eventDate);
+              if (bookingDate.toDateString() === eventDateObj.toDateString()) {
+                // Check if this booking was made today
+                const bookingCreationDate = booking.bookingDate || booking.createdAt;
+                if (bookingCreationDate) {
+                  let bookingTime;
+                  if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+                    bookingTime = bookingCreationDate.toDate();
+                  } else if (bookingCreationDate instanceof Date) {
+                    bookingTime = bookingCreationDate;
+                  } else {
+                    bookingTime = new Date(bookingCreationDate);
+                  }
+                  
+                  // Set time to beginning of day for comparison
+                  bookingTime.setHours(0, 0, 0, 0);
+                  
+                  // If booking was made today, return true
+                  if (bookingTime.getTime() === today.getTime()) {
+                    console.log('MATCH FOUND FOR TODAY!');
+                    return true;
+                  }
+                }
+                
+                // For backward compatibility, return true for any match
+                console.log('MATCH FOUND!');
+                return true;
+              }
+            }
+          } else {
+            // If no eventDate provided, use original logic
+            // Check if this booking was made today
+            const bookingDate = booking.bookingDate || booking.createdAt;
+            if (bookingDate) {
+              let bookingTime;
+              if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+                bookingTime = bookingDate.toDate();
+              } else if (bookingDate instanceof Date) {
+                bookingTime = bookingDate;
+              } else {
+                bookingTime = new Date(bookingDate);
+              }
+              
+              // Set time to beginning of day for comparison
+              bookingTime.setHours(0, 0, 0, 0);
+              
+              // If booking was made today, return true
+              if (bookingTime.getTime() === today.getTime()) {
+                console.log('MATCH FOUND FOR TODAY!');
+                return true;
+              }
+            }
+            
+            // For backward compatibility, return true for any match
+            console.log('MATCH FOUND!');
+            return true;
+          }
+        }
+      }
+    }
+    
+    console.log('No match found for event ID:', targetEventId);
+    return false;
+  };
 
   if (loading) {
     return (
@@ -715,17 +694,14 @@ function UserEventsPage() {
                         <button 
                           className="register-btn"
                           onClick={() => handleRegister(event)}
-                          disabled={hasUserBookedEvent(event.id, event.date) || 
-                                   checkTodaysBookingFromStorage(event.id) || 
+                          disabled={checkTodaysBookingFromStorage(event.id) || 
                                    isBookingClosed(event) ||
-                                   hasBookedThisWeek('Pay-Per-Run') ||
-                                   hasBookedThisWeek('Monthly Membership')}
+                                   hasBookedRecently('Pay-Per-Run') ||
+                                   hasBookedRecently('Monthly Membership')}
                         >
                           {isBookingClosed(event) ? 'Bookings Closed' :
                            checkTodaysBookingFromStorage(event.id) ? 'Already Booked Today' : 
-                           hasUserBookedToday(event.id, event.date) ? 'Already Booked Today' : 
-                           hasUserBookedEvent(event.id, event.date) ? 'Already Booked' : 
-                           (hasBookedThisWeek('Pay-Per-Run') || hasBookedThisWeek('Monthly Membership')) ? 'Already Booked' :
+                           (hasBookedRecently('Pay-Per-Run') || hasBookedRecently('Monthly Membership')) ? 'Already Booked' :
                            'Book Your Slot'}
                         </button>
                       </div>
