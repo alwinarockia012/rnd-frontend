@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaUsers, FaHome, FaUser, FaSignOutAlt, FaCalendarAlt, FaBell, FaTimes, FaRunning } from 'react-icons/fa';
+import { FaUsers, FaHome, FaUser, FaSignOutAlt, FaCalendarAlt, FaBell, FaTimes, FaRunning, FaAppleAlt } from 'react-icons/fa';
 // import { useAuth } from '../../../contexts/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
@@ -22,7 +22,9 @@ const DashboardNav = () => {
     // Removed progress page from navigation
     { path: '/user-events', label: 'My Events', icon: FaCalendarAlt },
     // Add Plans page to navigation
-    { path: '/plans', label: 'Plans', icon: FaRunning }
+    { path: '/plans', label: 'Plans', icon: FaRunning },
+    // Add Fitness Tracker page to navigation
+    { path: '/fitness', label: 'Fitness', icon: FaAppleAlt }
   ];
 
   // Close profile menu when clicking outside
@@ -51,6 +53,11 @@ const DashboardNav = () => {
   const handleNotifications = () => {
     // Navigate to the notifications page
     navigate('/notifications');
+    setIsProfileMenuOpen(false);
+  };
+
+  const handleFitnessTracker = () => {
+    navigate('/fitness');
     setIsProfileMenuOpen(false);
   };
 
@@ -135,6 +142,10 @@ const DashboardNav = () => {
               <button className="dropdown-item" onClick={handleNotifications}>
                 <FaBell />
                 <span>Notifications</span>
+              </button>
+              <button className="dropdown-item" onClick={handleFitnessTracker}>
+                <FaAppleAlt />
+                <span>Fitness Tracker</span>
               </button>
               <button className="dropdown-item" onClick={handleGoToLandingPageClick}>
                 <FaHome />

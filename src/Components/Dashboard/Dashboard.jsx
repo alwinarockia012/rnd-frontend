@@ -489,6 +489,26 @@ Thank you for booking with R&D - Run and Develop!
               </div>
             </motion.div>
 
+            {/* Fitness Tracker Card */}
+            <motion.div className="events-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+              <div className="card-header">
+                <h3>Fitness & Nutrition</h3>
+              </div>
+              <div className="events-list" style={{ minHeight: 'auto' }}>
+                <div className="event-item">
+                  <div className="event-info">
+                    <h4>Track Your Progress</h4>
+                    <p className="event-details">
+                      Monitor your meals, workouts, and nutrition goals
+                    </p>
+                  </div>
+                  <button className="join-event-btn" onClick={() => navigate('/fitness')}>
+                    Open Tracker
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+
             {/* Upcoming Events Card (Modified to show user's booked events) */}
             <motion.div className="events-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
               <div className="card-header">

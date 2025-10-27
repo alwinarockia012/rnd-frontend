@@ -1,0 +1,476 @@
+.fitness-tracker {
+  min-height: 100vh;
+  background-color: #000000; /* Changed to black */
+  color: #ffffff; /* Changed to white for better contrast */
+}
+
+.fitness-tracker-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.fitness-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.fitness-header h1 {
+  color: #ffffff; /* Changed to white */
+  margin-bottom: 10px;
+}
+
+.fitness-header p {
+  color: #cccccc; /* Changed to light gray */
+  font-size: 18px;
+}
+
+.fitness-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #333333; /* Changed to dark gray */
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 15px 25px;
+  font-size: 16px;
+  cursor: pointer;
+  color: #cccccc; /* Changed to light gray */
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  color: #ffffff; /* Changed to white */
+  background-color: #333333; /* Changed to dark gray */
+}
+
+.tab-button.active {
+  color: #F15A24; /* Orange accent color */
+  border-bottom: 3px solid #F15A24; /* Orange accent color */
+  background-color: #333333; /* Changed to dark gray */
+}
+
+.fitness-content {
+  background: #000000; /* Changed to black */
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Darker shadow */
+  border: 1px solid #333333; /* Added dark gray border */
+}
+
+/* Dashboard View Styles */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: #111111; /* Dark background */
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #F15A24; /* Orange border */
+  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
+  color: #ffffff; /* White text */
+}
+
+.stat-card h3 {
+  margin: 0 0 10px 0;
+  color: #ffffff; /* White text */
+  font-size: 18px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #F15A24; /* Orange accent color */
+  margin: 0;
+}
+
+.stat-value span {
+  font-size: 16px;
+  color: #cccccc; /* Light gray */
+  font-weight: normal;
+}
+
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.chart-container {
+  background: #111111; /* Dark background */
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #F15A24; /* Orange border */
+  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
+  color: #ffffff; /* White text */
+}
+
+.chart-container h3 {
+  margin-top: 0;
+  color: #ffffff; /* White text */
+}
+
+.chart-placeholder {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #222222; /* Darker background */
+  border-radius: 4px;
+  border: 1px dashed #333333; /* Dark gray dashed border */
+}
+
+.chart-placeholder p {
+  color: #cccccc; /* Light gray */
+  margin: 0;
+}
+
+.dashboard-tips {
+  margin-top: 30px;
+}
+
+.dashboard-tips h3 {
+  color: #ffffff; /* White text */
+  margin-bottom: 15px;
+}
+
+.tips-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.tip-card {
+  background: #1a1a1a; /* Dark background */
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #F15A24; /* Orange border */
+  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
+  color: #ffffff; /* White text */
+}
+
+.tip-card h4 {
+  margin-top: 0;
+  color: #F15A24; /* Orange accent color */
+}
+
+.tip-card p {
+  margin: 0;
+  color: #cccccc; /* Light gray */
+}
+
+/* Profile View Styles */
+.fitness-profile h2, .meal-tracker h2, .workout-tracker h2 {
+  color: #ffffff; /* White text */
+  margin-bottom: 20px;
+}
+
+.profile-form, .meal-form, .workout-form {
+  background: #111111; /* Dark background */
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  border: 1px solid #F15A24; /* Orange border */
+  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
+  color: #ffffff; /* White text */
+}
+
+.form-step {
+  margin-bottom: 20px;
+}
+
+.form-step h3 {
+  color: #ffffff;
+  margin-top: 0;
+  border-bottom: 1px solid #333333;
+  padding-bottom: 10px;
+}
+
+.form-section {
+  margin-bottom: 25px;
+}
+
+.form-section h3 {
+  margin-top: 0;
+  color: #ffffff; /* White text */
+  border-bottom: 1px solid #333333; /* Dark gray border */
+  padding-bottom: 10px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #ffffff; /* White text */
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #333333; /* Dark gray border */
+  border-radius: 4px;
+  box-sizing: border-box;
+  background: #222222; /* Dark background */
+  color: #ffffff; /* White text */
+}
+
+.form-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.back-button, .next-button, .save-button {
+  background-color: #333333; /* Dark gray */
+  color: white;
+  border: 1px solid #F15A24; /* Orange border */
+  padding: 12px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.next-button, .save-button {
+  background-color: #F15A24; /* Orange accent color */
+}
+
+.back-button:hover {
+  background-color: #444444; /* Slightly lighter dark gray */
+}
+
+.next-button:hover, .save-button:hover {
+  background-color: #e04d1f; /* Darker orange on hover */
+}
+
+.back-button:disabled, .next-button:disabled, .save-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.program-summary {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #F15A24;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333333;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.summary-item .label {
+  font-weight: 500;
+  color: #cccccc;
+}
+
+.summary-item .value {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.program-name {
+  color: #F15A24;
+  font-size: 1.2em;
+}
+
+/* Meal Tracker Styles */
+.meal-tracker-content, .workout-tracker-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.meal-form-section, .workout-form-section {
+  grid-column: 1 / -1;
+}
+
+.daily-summary, .weekly-summary {
+  background: #111111; /* Dark background */
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #F15A24; /* Orange border */
+  box-shadow: 0 0 10px rgba(241, 90, 36, 0.3); /* Orange glow */
+  color: #ffffff; /* White text */
+}
+
+.daily-summary h3, .weekly-summary h3 {
+  margin-top: 0;
+  color: #ffffff; /* White text */
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.summary-card {
+  background: #222222; /* Darker background */
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #F15A24; /* Orange border */
+  color: #ffffff; /* White text */
+}
+
+.summary-card h4 {
+  margin: 0 0 10px 0;
+  color: #ffffff; /* White text */
+  font-size: 16px;
+}
+
+.summary-card .value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #F15A24; /* Orange accent color */
+  margin: 0;
+}
+
+.meal-history, .workout-history {
+  grid-column: 1 / -1;
+  margin-top: 20px;
+}
+
+.meal-history h3, .workout-history h3 {
+  color: #ffffff; /* White text */
+}
+
+.no-meals, .no-workouts {
+  text-align: center;
+  color: #cccccc; /* Light gray */
+  font-style: italic;
+  padding: 20px;
+}
+
+.meal-date-group, .workout-date-group {
+  margin-bottom: 20px;
+}
+
+.meal-date-group h4, .workout-date-group h4 {
+  color: #ffffff; /* White text */
+  border-bottom: 1px solid #333333; /* Dark gray border */
+  padding-bottom: 5px;
+}
+
+.meal-item, .workout-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #333333; /* Dark gray border */
+  color: #ffffff; /* White text */
+}
+
+.meal-item:last-child, .workout-item:last-child {
+  border-bottom: none;
+}
+
+.meal-info h5, .workout-info h5 {
+  margin: 0 0 5px 0;
+  color: #ffffff; /* White text */
+}
+
+.meal-type, .workout-type {
+  font-size: 14px;
+  color: #cccccc; /* Light gray */
+  margin: 0 0 10px 0;
+}
+
+.meal-nutrition, .workout-details {
+  display: flex;
+  gap: 15px;
+  font-size: 14px;
+  color: #cccccc; /* Light gray */
+}
+
+.delete-meal-button, .delete-workout-button {
+  background-color: #dc3545; /* Red color for delete buttons */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.delete-meal-button:hover, .delete-workout-button:hover {
+  background-color: #c82333; /* Darker red on hover */
+}
+
+/* Messages */
+.message {
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.message.success {
+  background-color: #28a745; /* Green background */
+  color: #ffffff; /* White text */
+  border: 1px solid #28a745; /* Green border */
+}
+
+.message.error {
+  background-color: #dc3545; /* Red background */
+  color: #ffffff; /* White text */
+  border: 1px solid #dc3545; /* Red border */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fitness-tracker-content {
+    padding: 10px;
+  }
+  
+  .fitness-content {
+    padding: 15px;
+  }
+  
+  .tab-button {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+  
+  .dashboard-stats, .calculation-cards, .summary-cards, .tips-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .meal-tracker-content, .workout-tracker-content {
+    grid-template-columns: 1fr;
+  }
+}
