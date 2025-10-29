@@ -1,46 +1,46 @@
-# Netlify configuration file
+# ==============================
+# 🌐 Netlify Configuration File
+# ==============================
 
-# 1. Build Settings
-# Specifies the build command, publish directory, and functions directory.
+# 1️⃣ BUILD SETTINGS
 [build]
   command = "npm run build"
   publish = "build"
   functions = "netlify/functions"
 
-# Production environment settings
 [build.environment]
   NODE_VERSION = "18"
   NODE_ENV = "production"
-  # Disable source maps for smaller production builds
   GENERATE_SOURCEMAP = "false"
 
-# Netlify's automatic asset optimization
+# 2️⃣ ASSET OPTIMIZATION
 [build.processing]
   skip_processing = false
+
 [build.processing.css]
   bundle = true
   minify = true
+
 [build.processing.js]
   bundle = true
   minify = true
+
 [build.processing.images]
   compress = true
 
-# 4. Caching Strategy
+# 3️⃣ CACHING STRATEGY
 [[headers]]
   for = "/static/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-
-
 [[headers]]
-  for = "/assets/*" # Specific for your project's assets
+  for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "/public/*" # Specific for your project's public directory
+  for = "/public/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
@@ -49,38 +49,39 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Redirects for API calls to Netlify functions
+# 4️⃣ REDIRECTS
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# The following redirect is intended for single-page applications (SPAs).
-# It ensures that any request that doesn't match a pre-existing file
-# is redirected to the main index.html file.
+# Single Page App (SPA) redirect rule
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Caching and Security Headers
+# 5️⃣ SECURITY & CSP HEADERS (✅ Updated for Razorpay)
 [[headers]]
-  # Apply these headers to all pages
   for = "/*"
   [headers.values]
-    # Prevent clickjacking
+    # Security
     X-Frame-Options = "DENY"
-    # Prevent MIME-sniffing
     X-Content-Type-Options = "nosniff"
-    # Control referrer information
     Referrer-Policy = "no-referrer"
-    # Content Security Policy (CSP) - Updated to be more permissive for Firebase Auth
-    Content-Security-Policy = "default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleapis.com https://www.google.com https://www.gstatic.com; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com https://www.google.com https://api.emailjs.com https://script.google.com; frame-src 'self' https://www.google.com https://*.firebaseapp.com https://*.firebaseio.com; object-src 'none';"
-    # Do not cache HTML files to ensure users get the latest version
+    # 🔐 CSP UPDATED — added https://checkout.razorpay.com
+    Content-Security-Policy = "default-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleapis.com https://www.google.com https://www.gstatic.com; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com https://www.google.com https://api.emailjs.com https://script.google.com https://checkout.razorpay.com https://api.razorpay.com; frame-src 'self' https://www.google.com https://*.firebaseapp.com https://*.firebaseio.com https://checkout.razorpay.com; object-src 'none';"
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# 6️⃣ LONG CACHE FOR STATIC FILES
 [[headers]]
-  # Cache fingerprinted assets for one year
   for = "/static/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# 7️⃣ ALTERNATE GLOBAL CSP (optional duplicate safeguard)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://checkout.razorpay.com;"
+    Referrer-Policy = "strict-origin-when-cross-origin"
