@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import fitnessService from '../../services/fitnessService';
 
-const WorkoutTracker = ({ user }) => {
+const WorkoutTracker = ({ user, onSwitchToDashboard }) => {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingCalories, setFetchingCalories] = useState(false);
   const [message, setMessage] = useState('');
+  const [userProfile, setUserProfile] = useState(null);
   
   const [newWorkout, setNewWorkout] = useState({
     name: '',
@@ -15,24 +17,32 @@ const WorkoutTracker = ({ user }) => {
     date: new Date().toISOString().split('T')[0]
   });
 
-  // Load user workouts when component mounts
+  // Load user workouts and profile when component mounts
   useEffect(() => {
-    const loadWorkouts = async () => {
+    const loadData = async () => {
       if (user && user.uid) {
         try {
           setLoading(true);
+          
+          // Load user profile
+          const profileResult = await fitnessService.getUserProfile(user.uid);
+          if (profileResult.success) {
+            setUserProfile(profileResult.data);
+          }
+          
+          // Load user workouts
           const userWorkouts = await fitnessService.getUserWorkouts(user.uid);
           setWorkouts(userWorkouts);
         } catch (error) {
-          console.error('Error loading workouts:', error);
-          setMessage('Error loading workouts: ' + error.message);
+          console.error('Error loading data:', error);
+          setMessage('Error loading data: ' + error.message);
         } finally {
           setLoading(false);
         }
       }
     };
 
-    loadWorkouts();
+    loadData();
   }, [user]);
 
   const handleChange = (e) => {
@@ -41,6 +51,103 @@ const WorkoutTracker = ({ user }) => {
       ...prev,
       [name]: value
     }));
+    
+    // Fetch calories when duration is updated (and we have other required data)
+    if (name === 'duration' && value && userProfile) {
+      clearTimeout(window.calorieFetchTimeout);
+      window.calorieFetchTimeout = setTimeout(() => {
+        if (value.trim() && newWorkout.name.trim()) {
+          fetchCaloriesBurned(newWorkout.name, newWorkout.type, value, userProfile);
+        }
+      }, 500);
+    }
+    
+    // Fetch calories when workout type is updated (and we have other required data)
+    if (name === 'type' && newWorkout.duration && userProfile) {
+      clearTimeout(window.calorieFetchTimeout);
+      window.calorieFetchTimeout = setTimeout(() => {
+        if (newWorkout.duration.trim() && newWorkout.name.trim()) {
+          fetchCaloriesBurned(newWorkout.name, value, newWorkout.duration, userProfile);
+        }
+      }, 500);
+    }
+    
+    // Fetch calories when workout name is updated (and we have other required data)
+    if (name === 'name' && newWorkout.duration && userProfile) {
+      clearTimeout(window.calorieFetchTimeout);
+      window.calorieFetchTimeout = setTimeout(() => {
+        if (value.trim() && newWorkout.duration.trim()) {
+          fetchCaloriesBurned(value, newWorkout.type, newWorkout.duration, userProfile);
+        }
+      }, 500);
+    }
+  };
+
+  const fetchCaloriesBurned = async (workoutName, workoutType, duration, profile) => {
+    if (!workoutName.trim() || !duration || !profile) return;
+    
+    setFetchingCalories(true);
+    setMessage('');
+    
+    try {
+      // Prepare user data for API request
+      const userData = {
+        age: profile.age || 30,
+        weight: profile.currentWeight || 70,
+        height: profile.height || 170,
+        gender: profile.gender || 'male',
+        activityLevel: profile.activityLevel || 'moderate'
+      };
+      
+      // DeepSeek API configuration
+      const apiKey = 'sk-1116ca52ef05484c83f0b8b3603f7ad0'; // Your DeepSeek API key
+      const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+         'Authorization': `Bearer ${apiKey}`
+
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "user",
+              content: `Calculate approximate calories burned for a ${userData.age}-year-old ${userData.gender} weighing ${userData.weight}kg and ${userData.height}cm tall doing ${workoutName} (${workoutType}) for ${duration} minutes. Return only a number representing total calories burned.`
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 50
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const caloriesInfo = data.choices[0].message.content.trim();
+      
+      // Extract number from response
+      const caloriesMatch = caloriesInfo.match(/\d+/);
+      const calories = caloriesMatch ? parseInt(caloriesMatch[0]) : 0;
+      
+      if (calories > 0) {
+        setNewWorkout(prev => ({
+          ...prev,
+          calories: calories.toString()
+        }));
+        
+        setMessage(`Estimated ${calories} calories burned for this workout!`);
+      }
+    } catch (error) {
+      console.error('Error fetching calories data:', error);
+      setMessage('Could not calculate calories. Please enter manually.');
+    } finally {
+      setFetchingCalories(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -75,7 +182,18 @@ const WorkoutTracker = ({ user }) => {
           
           // Dispatch a custom event to notify the dashboard to refresh
           window.dispatchEvent(new CustomEvent('workoutLogged', { detail: { userId: user.uid } }));
+          
+          // Automatically redirect to dashboard after 1.5 seconds
+          setTimeout(() => {
+            if (onSwitchToDashboard) {
+              onSwitchToDashboard();
+            }
+          }, 1500);
+        } else {
+          setMessage('Failed to log workout. Please try again.');
         }
+      } else {
+        setMessage('User not authenticated. Please log in first.');
       }
     } catch (error) {
       setMessage('Error logging workout: ' + error.message);
@@ -176,7 +294,7 @@ const WorkoutTracker = ({ user }) => {
       <h2>Workout Tracker</h2>
       
       {message && (
-        <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>
+        <div className={`message ${message.includes('Error') || message.includes('Failed') ? 'error' : 'success'}`}>
           {message}
         </div>
       )}
@@ -223,6 +341,7 @@ const WorkoutTracker = ({ user }) => {
                   value={newWorkout.duration}
                   onChange={handleChange}
                   placeholder="0"
+                  required
                 />
               </div>
               
@@ -235,6 +354,7 @@ const WorkoutTracker = ({ user }) => {
                   onChange={handleChange}
                   placeholder="0"
                 />
+                {fetchingCalories && <span className="loading-text">Calculating calories...</span>}
               </div>
             </div>
             
@@ -263,7 +383,7 @@ const WorkoutTracker = ({ user }) => {
             <button 
               type="submit" 
               className="log-workout-button"
-              disabled={loading}
+              disabled={loading || fetchingCalories}
             >
               {loading ? 'Logging...' : 'Log Workout'}
             </button>

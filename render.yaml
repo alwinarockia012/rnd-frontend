@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: razorpay-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm run server
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: NODE_ENV
+        value: production
+      - key: RAZORPAY_MODE
+        value: test
+      - key: BACKEND_PORT
+        value: 5001
+      # Add your actual Razorpay keys here or set them in Render dashboard
+      - key: RAZORPAY_KEY_ID_TEST
+        sync: false
+      - key: RAZORPAY_KEY_SECRET_TEST
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false

@@ -36,13 +36,23 @@ const FitnessTracker = () => {
       setRefreshKey(prev => prev + 1);
     };
 
+    // Listen for meal events to refresh dashboard
+    const handleMealEvent = () => {
+      // Increment refresh key to force re-render of dashboard
+      setRefreshKey(prev => prev + 1);
+    };
+
     window.addEventListener('workoutLogged', handleWorkoutEvent);
     window.addEventListener('workoutDeleted', handleWorkoutEvent);
+    window.addEventListener('mealLogged', handleMealEvent);
+    window.addEventListener('mealDeleted', handleMealEvent);
 
     return () => {
       unsubscribe();
       window.removeEventListener('workoutLogged', handleWorkoutEvent);
       window.removeEventListener('workoutDeleted', handleWorkoutEvent);
+      window.removeEventListener('mealLogged', handleMealEvent);
+      window.removeEventListener('mealDeleted', handleMealEvent);
     };
   }, []);
 
@@ -71,6 +81,10 @@ const FitnessTracker = () => {
     if (profile.age && profile.currentWeight && profile.targetWeight) {
       setProfileSetupComplete(true);
     }
+  };
+
+  const switchToDashboard = () => {
+    setActiveTab('dashboard');
   };
 
   if (loading) {
@@ -138,7 +152,7 @@ const FitnessTracker = () => {
         <div className="fitness-content">
           {activeTab === 'dashboard' && <DashboardView key={refreshKey} user={user} />}
           {activeTab === 'meals' && <MealTracker user={user} />}
-          {activeTab === 'workouts' && <WorkoutTracker user={user} />}
+          {activeTab === 'workouts' && <WorkoutTracker user={user} onSwitchToDashboard={switchToDashboard} />}
           {activeTab === 'profile' && <Profile user={user} onProfileUpdate={handleProfileUpdate} />}
         </div>
       </div>

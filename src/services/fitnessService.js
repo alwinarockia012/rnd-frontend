@@ -104,11 +104,11 @@ class FitnessService {
   async getUserMeals(userId, limitCount = 50) {
     try {
       const mealsRef = collection(db, this.COLLECTIONS.MEAL_LOGS);
+      // Remove the orderBy clause that requires a composite index
       const q = query(
         mealsRef,
-        where('userId', '==', userId),
-        orderBy('loggedAt', 'desc'),
-        limit(limitCount)
+        where('userId', '==', userId)
+        // Removed orderBy('loggedAt', 'desc') to avoid index requirement
       );
       
       const querySnapshot = await getDocs(q);
@@ -121,7 +121,16 @@ class FitnessService {
         });
       });
       
-      return meals;
+      // Sort manually in JavaScript instead of using Firestore orderBy
+      meals.sort((a, b) => {
+        // Handle cases where loggedAt might not exist
+        const dateA = a.loggedAt ? (a.loggedAt.toDate ? a.loggedAt.toDate() : new Date(a.loggedAt)) : new Date(0);
+        const dateB = b.loggedAt ? (b.loggedAt.toDate ? b.loggedAt.toDate() : new Date(b.loggedAt)) : new Date(0);
+        return dateB - dateA; // Descending order (newest first)
+      });
+      
+      // Apply limit manually
+      return meals.slice(0, limitCount);
     } catch (error) {
       console.error('Error getting user meals:', error);
       return [];
@@ -156,11 +165,11 @@ class FitnessService {
   async getUserWorkouts(userId, limitCount = 50) {
     try {
       const workoutsRef = collection(db, this.COLLECTIONS.WORKOUT_LOGS);
+      // Remove the orderBy clause that requires a composite index
       const q = query(
         workoutsRef,
-        where('userId', '==', userId),
-        orderBy('loggedAt', 'desc'),
-        limit(limitCount)
+        where('userId', '==', userId)
+        // Removed orderBy('loggedAt', 'desc') to avoid index requirement
       );
       
       const querySnapshot = await getDocs(q);
@@ -173,7 +182,16 @@ class FitnessService {
         });
       });
       
-      return workouts;
+      // Sort manually in JavaScript instead of using Firestore orderBy
+      workouts.sort((a, b) => {
+        // Handle cases where loggedAt might not exist
+        const dateA = a.loggedAt ? (a.loggedAt.toDate ? a.loggedAt.toDate() : new Date(a.loggedAt)) : new Date(0);
+        const dateB = b.loggedAt ? (b.loggedAt.toDate ? b.loggedAt.toDate() : new Date(b.loggedAt)) : new Date(0);
+        return dateB - dateA; // Descending order (newest first)
+      });
+      
+      // Apply limit manually
+      return workouts.slice(0, limitCount);
     } catch (error) {
       console.error('Error getting user workouts:', error);
       return [];
@@ -288,13 +306,18 @@ class FitnessService {
   calculateBMR(profile) {
     const { age, gender, height, weight } = profile;
     
+    if (!age || !gender || !height || !weight) return 2200;
+
+    let bmr;
     if (gender === 'male') {
       // Mifflin-St Jeor Equation for men
-      return 10 * weight + 6.25 * height - 5 * age + 5;
+      bmr = Math.round(10 * weight + 6.25 * height - 5 * age + 5);
     } else {
       // Mifflin-St Jeor Equation for women
-      return 10 * weight + 6.25 * height - 5 * age - 161;
+      bmr = Math.round(10 * weight + 6.25 * height - 5 * age - 161);
     }
+
+    return bmr;
   }
 
   // Calculate TDEE (Total Daily Energy Expenditure)

@@ -595,8 +595,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Determine the port
-const PORT = process.env.BACKEND_PORT || process.env.PORT || 5001;
+// Determine the port - Modified for Render compatibility
+const PORT = process.env.PORT || process.env.BACKEND_PORT || 5001;
 console.log('  Using port:', PORT);
 
 // Start server
@@ -604,12 +604,14 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Razorpay backend server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Mode: ${razorpayMode.toUpperCase()}`);
-  console.log(`CORS enabled for: http://localhost:3000, http://localhost:3001, http://localhost:5001`);
+  
+  // Update CORS origins for production
+  console.log(`CORS enabled for frontend domains`);
   
   // Remind user to set up keys if they're using placeholder values
   if (razorpayKeyId && razorpayKeyId.includes('your_test_key_id')) {
     console.log('\n⚠️  WARNING: You are using placeholder Razorpay keys!');
-    console.log('Please update your .env file with real Razorpay test keys from https://dashboard.razorpay.com/');
+    console.log('Please update your environment variables with real Razorpay test keys from https://dashboard.razorpay.com/');
   }
 });
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import fitnessService from '../../services/fitnessService';
+import Notifications from './Notifications';
+import AIAssistant from './AIAssistant';
 
 const DashboardView = ({ user }) => {
   const [stats, setStats] = useState({
@@ -12,6 +14,9 @@ const DashboardView = ({ user }) => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [meals, setMeals] = useState([]);
+  const [workouts, setWorkouts] = useState([]);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -20,6 +25,7 @@ const DashboardView = ({ user }) => {
       if (user && user.uid) {
         try {
           setError(null);
+          setLoading(true);
           
           // Add timeout to prevent hanging
           const timeout = new Promise((resolve, reject) => {
@@ -31,9 +37,10 @@ const DashboardView = ({ user }) => {
           const profileResult = await Promise.race([profilePromise, timeout]);
           
           if (isMounted && profileResult.success) {
-            const profile = profileResult.data;
+            const profileData = profileResult.data;
+            setProfile(profileData);
             // Calculate calorie goal based on user profile
-            const calorieGoal = calculateCalorieNeeds(profile);
+            const calorieGoal = calculateCalorieNeeds(profileData);
             
             if (isMounted) {
               setStats(prev => ({
@@ -48,6 +55,7 @@ const DashboardView = ({ user }) => {
           const mealsResult = await Promise.race([mealsPromise, timeout]);
           
           if (isMounted && mealsResult) {
+            setMeals(mealsResult);
             const today = new Date().toISOString().split('T')[0];
             const todayMeals = mealsResult.filter(meal => {
               // Check if meal has a loggedAt timestamp
@@ -90,6 +98,7 @@ const DashboardView = ({ user }) => {
           const workoutsResult = await Promise.race([workoutsPromise, timeout]);
           
           if (isMounted && workoutsResult) {
+            setWorkouts(workoutsResult);
             const oneWeekAgo = new Date();
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
             
@@ -149,11 +158,22 @@ const DashboardView = ({ user }) => {
     window.addEventListener('workoutLogged', handleWorkoutEvent);
     window.addEventListener('workoutDeleted', handleWorkoutEvent);
     
+    // Listen for meal events to refresh dashboard
+    const handleMealEvent = () => {
+      // Reload dashboard data when meals are logged or deleted
+      loadDashboardData();
+    };
+
+    window.addEventListener('mealLogged', handleMealEvent);
+    window.addEventListener('mealDeleted', handleMealEvent);
+    
     // Cleanup function to prevent state updates after component unmount
     return () => {
       isMounted = false;
       window.removeEventListener('workoutLogged', handleWorkoutEvent);
       window.removeEventListener('workoutDeleted', handleWorkoutEvent);
+      window.removeEventListener('mealLogged', handleMealEvent);
+      window.removeEventListener('mealDeleted', handleMealEvent);
     };
   }, [user]);
 
@@ -193,6 +213,20 @@ const DashboardView = ({ user }) => {
     }
   };
 
+  // Show a success message when a workout is logged
+  useEffect(() => {
+    const handleWorkoutLogged = () => {
+      // You could show a toast notification or other UI feedback here
+      console.log('Workout successfully logged! Dashboard updated.');
+    };
+
+    window.addEventListener('workoutLogged', handleWorkoutLogged);
+    
+    return () => {
+      window.removeEventListener('workoutLogged', handleWorkoutLogged);
+    };
+  }, []);
+
   if (loading) {
     return <div className="dashboard-view">Loading dashboard data...</div>;
   }
@@ -203,6 +237,14 @@ const DashboardView = ({ user }) => {
 
   return (
     <div className="dashboard-view">
+      {/* Smart Notifications Panel */}
+      <Notifications 
+        user={user} 
+        meals={meals} 
+        workouts={workouts} 
+        profile={profile} 
+      />
+      
       <div className="dashboard-stats">
         <div className="stat-card">
           <h3>Calories Consumed</h3>
@@ -253,6 +295,14 @@ const DashboardView = ({ user }) => {
           </div>
         </div>
       </div>
+      
+      {/* AI Assistant Chat */}
+      <AIAssistant 
+        user={user} 
+        meals={meals} 
+        workouts={workouts} 
+        profile={profile} 
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-// API Configuration utility
+   // API Configuration utility
 // In browser environment, we need to detect development vs production differently
 
 // Determine if we're in development based on the hostname
@@ -28,21 +28,21 @@ export const getApiBaseUrl = () => {
     return 'http://localhost:5003';
   }
   
-  // In production, use the same origin (relative URLs)
-  // This assumes the backend is served from the same domain
-  return '';
+  // In production (Netlify), use the Render backend URL
+  // Make sure to replace this with your actual Render backend URL
+  return process.env.REACT_APP_API_BASE_URL || 'https://your-render-app-name.onrender.com';
 };
 
 // Get the full API URL for a specific endpoint
 export const getApiUrl = (endpoint) => {
   const baseUrl = getApiBaseUrl();
   
-  // If baseUrl is empty (production), return relative URL
+  // If baseUrl is empty (shouldn't happen), return relative URL
   if (!baseUrl) {
     return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   }
   
-  // In development, combine base URL with endpoint
+  // Combine base URL with endpoint
   return `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 };
 

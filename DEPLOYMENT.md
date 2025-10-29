@@ -42,6 +42,11 @@ EMAILJS_PUBLIC_KEY=your_public_key
 EMAILJS_PRIVATE_KEY=your_private_key
 ```
 
+**API Base URL (required for Razorpay integration):**
+```
+REACT_APP_API_BASE_URL=https://your-render-service-name.onrender.com
+```
+
 ## 🔧 **Build Settings**
 - **Build command**: `npm run build`
 - **Publish directory**: `build`
@@ -49,6 +54,10 @@ EMAILJS_PRIVATE_KEY=your_private_key
 
 ## 🎯 **Result**
 Your site will be available at: `https://your-site-name.netlify.app`
+
+## 📚 **Complete Deployment Guide**
+
+For a detailed step-by-step guide on deploying both the frontend and backend with Razorpay integration, please refer to the [Complete Netlify Deployment Guide](NETLIFY_DEPLOYMENT_FULL_GUIDE.md).
 
 ## 🆘 **Troubleshooting**
 - Check build logs in Netlify dashboard

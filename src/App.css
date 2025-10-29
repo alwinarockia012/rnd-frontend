@@ -14,7 +14,7 @@
   background-color: var(--appColor);
   display: flex;
   flex-direction: column;
-  gap: 6rem;
+  gap: 0; /* Remove the gap between sections */
   overflow: hidden;
 }
 

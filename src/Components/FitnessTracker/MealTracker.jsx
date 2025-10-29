@@ -4,6 +4,7 @@ import fitnessService from '../../services/fitnessService';
 const MealTracker = ({ user }) => {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingNutrition, setFetchingNutrition] = useState(false);
   const [message, setMessage] = useState('');
   
   const [newMeal, setNewMeal] = useState({
@@ -36,12 +37,100 @@ const MealTracker = ({ user }) => {
     loadMeals();
   }, [user]);
 
+  const fetchNutritionData = async (foodName) => {
+    if (!foodName.trim()) return;
+    
+    setFetchingNutrition(true);
+    setMessage('');
+    
+    try {
+      // DeepSeek API configuration
+      const apiKey = 'sk-1116ca52ef05484c83f0b8b3603f7ad0'; // Your DeepSeek API key
+      const apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "user",
+              content: `Given a food name, return approximate nutrition facts per 100 grams in strict JSON format with keys: food, calories, protein_g, carbs_g, fat_g. Only return valid JSON without any markdown formatting. Food: ${foodName}`
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 200
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const nutritionInfo = data.choices[0].message.content.trim();
+      
+      // Clean the response to remove any markdown formatting
+      let cleanedNutritionInfo = nutritionInfo;
+      if (cleanedNutritionInfo.startsWith('```json')) {
+        cleanedNutritionInfo = cleanedNutritionInfo.substring(7);
+      }
+      if (cleanedNutritionInfo.startsWith('```')) {
+        cleanedNutritionInfo = cleanedNutritionInfo.substring(3);
+      }
+      if (cleanedNutritionInfo.endsWith('```')) {
+        cleanedNutritionInfo = cleanedNutritionInfo.slice(0, -3);
+      }
+      cleanedNutritionInfo = cleanedNutritionInfo.trim();
+      
+      // Try to parse the JSON response
+      try {
+        const nutritionData = JSON.parse(cleanedNutritionInfo);
+        
+        // Update the form fields with the fetched nutrition data
+        setNewMeal(prev => ({
+          ...prev,
+          calories: nutritionData.calories || '',
+          protein: nutritionData.protein_g || '',
+          carbs: nutritionData.carbs_g || '',
+          fat: nutritionData.fat_g || ''
+        }));
+        
+        setMessage(`Nutrition facts for ${nutritionData.food} fetched successfully!`);
+      } catch (parseError) {
+        console.error('Error parsing nutrition data:', parseError);
+        console.error('Raw nutrition info:', nutritionInfo);
+        setMessage('Failed to parse nutrition data. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error fetching nutrition data:', error);
+      setMessage('Error fetching nutrition data: ' + error.message);
+    } finally {
+      setFetchingNutrition(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewMeal(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // Fetch nutrition data when meal name is updated
+    if (name === 'name') {
+      // Debounce the API call to avoid too many requests
+      clearTimeout(window.nutritionFetchTimeout);
+      window.nutritionFetchTimeout = setTimeout(() => {
+        if (value.trim()) {
+          fetchNutritionData(value);
+        }
+      }, 500);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -75,6 +164,9 @@ const MealTracker = ({ user }) => {
             mealType: 'breakfast',
             date: new Date().toISOString().split('T')[0]
           });
+          
+          // Dispatch a custom event to notify the dashboard to refresh
+          window.dispatchEvent(new CustomEvent('mealLogged', { detail: { userId: user.uid } }));
         }
       }
     } catch (error) {
@@ -89,6 +181,9 @@ const MealTracker = ({ user }) => {
     // For now, we'll just remove from local state
     setMeals(meals.filter(meal => meal.id !== mealId));
     setMessage('Meal deleted successfully!');
+    
+    // Dispatch a custom event to notify the dashboard to refresh
+    window.dispatchEvent(new CustomEvent('mealDeleted', { detail: { userId: user.uid } }));
   };
 
   // Calculate daily totals
@@ -191,6 +286,7 @@ const MealTracker = ({ user }) => {
                   placeholder="e.g., Oatmeal with Berries"
                   required
                 />
+                {fetchingNutrition && <span className="loading-text">Fetching nutrition data...</span>}
               </div>
               
               <div className="form-group">
@@ -269,7 +365,7 @@ const MealTracker = ({ user }) => {
             <button 
               type="submit" 
               className="log-meal-button"
-              disabled={loading}
+              disabled={loading || fetchingNutrition}
             >
               {loading ? 'Logging...' : 'Log Meal'}
             </button>
@@ -326,7 +422,7 @@ const MealTracker = ({ user }) => {
                         <div className="meal-info">
                           <h5>{meal.name}</h5>
                           <p className="meal-type">{meal.mealType}</p>
-                          <div className="meal-nutrition">
+                          <div className="meal-details">
                             <span>{meal.calories || 0} cal</span>
                             <span>{meal.protein || 0}g protein</span>
                             <span>{meal.carbs || 0}g carbs</span>
