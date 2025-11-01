@@ -107,6 +107,51 @@
   color: #777;
 }
 
+/* Date input wrapper with calendar icon */
+.date-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%; /* Ensure full width */
+}
+
+.date-input {
+  padding: 12px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background-color: #1a1a1a;
+  color: #eee;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  width: 100%; /* Full width */
+  padding-right: 40px; /* Space for the icon */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.date-input:focus {
+  border-color: #F15A24;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(241, 90, 36, 0.2);
+}
+
+.calendar-icon {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #F15A24;
+  background: transparent;
+  border: none;
+  padding: 0;
+  z-index: 2;
+  transition: all 0.2s ease;
+}
+
+.calendar-icon:hover {
+  transform: scale(1.1);
+  color: #ff7f50;
+}
+
 /* Two-column row layout */
 .form-row {
   display: grid;

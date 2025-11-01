@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { RecaptchaVerifier, signInWithPhoneNumber, updateProfile } from "firebase/auth";
 import { auth } from "../../firebase";
@@ -12,7 +12,9 @@ const SignUp = () => {
   const [otp, setOtp] = useState("");
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [dob, setDob] = useState("");
   const navigate = useNavigate();
+  const dobInputRef = useRef(null);
 
   useEffect(() => {
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
@@ -60,9 +62,55 @@ const SignUp = () => {
     }
   };
 
+  // Calculate maximum date (13 years ago from today)
+  const getMaxDate = () => {
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+    return maxDate.toISOString().split('T')[0];
+  };
+
+  // Calculate minimum date (100 years ago from today)
+  const getMinDate = () => {
+    const today = new Date();
+    const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
+    return minDate.toISOString().split('T')[0];
+  };
+
+  const handleDobChange = (e) => {
+    const selectedDate = e.target.value;
+    setDob(selectedDate);
+    
+    // Check if user is under 13
+    const dobDate = new Date(selectedDate);
+    const today = new Date();
+    const thirteenYearsAgo = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+    
+    if (dobDate > thirteenYearsAgo) {
+      showNotification("You must be at least 13 years old to register.", "error");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+
+    // Validate DOB
+    if (!dob) {
+      showNotification("Please enter your date of birth.", "error");
+      setSubmitting(false);
+      return;
+    }
+
+    // Check if user is under 13
+    const dobDate = new Date(dob);
+    const today = new Date();
+    const thirteenYearsAgo = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+    
+    if (dobDate > thirteenYearsAgo) {
+      showNotification("You must be at least 13 years old to register.", "error");
+      setSubmitting(false);
+      return;
+    }
 
     if (!confirmationResult) {
       showNotification("Please get an OTP first.", "error");
@@ -86,7 +134,7 @@ const SignUp = () => {
       const userData = {
         displayName: rawData.fullname,
         gender: rawData.gender,
-        dateOfBirth: rawData.dob,
+        dateOfBirth: dob, // Use the state value
         profession: rawData.profession,
         phone: rawData.phone,
         emergencyContact: rawData.emergency,
@@ -143,7 +191,7 @@ const SignUp = () => {
         </div>
         <div className="top-buttons">
           <button className="toggle-btn active">Sign Up</button>
-          <button className="toggle-btn" onClick={handleSignInClick}>SignIn</button>
+          <button className="toggle-btn" onClick={handleSignInClick}>LogIn</button>
         </div>
         <div className="club">
           <h2>Join the club</h2>
@@ -168,7 +216,22 @@ const SignUp = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Date of Birth *</label>
-              <input type="date" name="dob" required />
+              <div className="date-input-wrapper">
+                <input 
+                  type="date" 
+                  name="dob" 
+                  required 
+                  value={dob}
+                  onChange={handleDobChange}
+                  ref={dobInputRef}
+                  max={getMaxDate()}
+                  min={getMinDate()}
+                  className="date-input"
+                />
+                <span className="calendar-icon" onClick={() => dobInputRef.current?.showPicker?.()}>
+                  📅
+                </span>
+              </div>
             </div>
             <div className="form-group">
               <label>Profession *</label>
@@ -222,7 +285,7 @@ const SignUp = () => {
                 handleSignInClick();
               }}
             >
-              SignIn
+              Login
             </button>
           </p>
         </form>
