@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { RecaptchaVerifier, signInWithPhoneNumber, updateProfile } from "firebase/auth";
 import { auth } from "../../firebase";
@@ -13,58 +13,14 @@ const SignUp = () => {
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
-  const recaptchaContainerRef = useRef(null);
 
   useEffect(() => {
-    // Clean up previous recaptcha verifier if it exists
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
-      window.recaptchaVerifier = null;
-    }
-    
-    // Initialize recaptcha after component mount when DOM is ready
-    const initRecaptcha = () => {
-      try {
-        // Check if container element exists
-        if (!recaptchaContainerRef.current) {
-          console.warn("Recaptcha container not found, retrying...");
-          setTimeout(initRecaptcha, 100);
-          return;
-        }
-        
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-          'size': 'invisible',
-          'callback': (response) => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-            console.log("Recaptcha verified");
-          },
-          'expired-callback': () => {
-            // Response expired, reset the recaptcha
-            console.log("Recaptcha expired");
-            showNotification("Recaptcha expired. Please try again.", "error");
-          },
-          'error-callback': (error) => {
-            console.error("Recaptcha error:", error);
-            showNotification("Recaptcha error. Please refresh the page and try again.", "error");
-          }
-        });
-      } catch (error) {
-        console.error("Error initializing RecaptchaVerifier:", error);
-        showNotification("Failed to initialize reCAPTCHA. Please check your internet connection and refresh the page.", "error");
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      'size': 'invisible',
+      'callback': (response) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
       }
-    };
-    
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(initRecaptcha, 100);
-    
-    // Cleanup function
-    return () => {
-      clearTimeout(timer);
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
-    };
+    });
   }, []);
 
   const showNotification = (message, type = 'info') => {
@@ -108,27 +64,6 @@ const SignUp = () => {
     e.preventDefault();
     setSubmitting(true);
 
-    // Validate date of birth (must be at least 13 years old)
-    const formData = new FormData(e.target);
-    const dob = formData.get('dob');
-    if (dob) {
-      const today = new Date();
-      const birthDate = new Date(dob);
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      
-      // Adjust age if birthday hasn't occurred this year yet
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      
-      if (age < 13) {
-        showNotification("You must be at least 13 years old to register.", "error");
-        setSubmitting(false);
-        return;
-      }
-    }
-
     if (!confirmationResult) {
       showNotification("Please get an OTP first.", "error");
       setSubmitting(false);
@@ -139,6 +74,7 @@ const SignUp = () => {
       const userCredential = await confirmationResult.confirm(otp);
       const user = userCredential.user;
 
+      const formData = new FormData(e.target);
       const rawData = Object.fromEntries(formData.entries());
 
       // Update Firebase Auth profile with displayName
@@ -207,7 +143,7 @@ const SignUp = () => {
         </div>
         <div className="top-buttons">
           <button className="toggle-btn active">Sign Up</button>
-          <button className="toggle-btn" onClick={handleSignInClick}>Log in</button>
+          <button className="toggle-btn" onClick={handleSignInClick}>SignIn</button>
         </div>
         <div className="club">
           <h2>Join the club</h2>
@@ -232,12 +168,7 @@ const SignUp = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Date of Birth *</label>
-              <input 
-                type="date" 
-                name="dob" 
-                required 
-                max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
-              />
+              <input type="date" name="dob" required />
             </div>
             <div className="form-group">
               <label>Profession *</label>
