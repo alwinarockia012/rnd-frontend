@@ -8,6 +8,8 @@ body, html {
   height: 100%;
   background-color: #1e1e1e;
   font-family: Arial, sans-serif;
+ 
+
 }
 
 .AboutData {
@@ -17,6 +19,8 @@ body, html {
   padding: 4rem 2rem;  /* Add some padding for better spacing */
   width: 100%;
   box-sizing: border-box;  /* Ensure padding doesn't affect width */
+   padding-top: 150px;
+    padding-bottom: 150px;
 }
 
 .details-r {

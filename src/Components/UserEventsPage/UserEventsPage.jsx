@@ -785,12 +785,11 @@ function UserEventsPage() {
                           onClick={() => handleRegister(event)}
                           disabled={checkTodaysBookingFromStorage(event.id) || 
                                    isBookingClosed(event) ||
-                                   hasBookedRecently('Pay-Per-Run') ||
-                                   hasBookedRecently('Monthly Membership')}
+                                   hasUserBookedToday(event.id, event.date)}
                         >
                           {isBookingClosed(event) ? 'Bookings Closed' :
-                           checkTodaysBookingFromStorage(event.id) ? 'Already Booked Today' : 
-                           (hasBookedRecently('Pay-Per-Run') || hasBookedRecently('Monthly Membership')) ? 'Already Booked' :
+                           checkTodaysBookingFromStorage(event.id) ? 'Booked for this week' : 
+                           hasUserBookedToday(event.id, event.date) ? 'Booked for this week' :
                            'Book Your Slot'}
                         </button>
                       </div>

@@ -32,6 +32,31 @@ const isEventDatePassed = (eventDate) => {
   return eventTime < today;
 };
 
+// Utility function to check if a booking is within the current week (5 days)
+const isBookingWithinCurrentWeek = (bookingDate) => {
+  if (!bookingDate) return false;
+  
+  let bookingTime;
+  if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+    bookingTime = bookingDate.toDate();
+  } else if (bookingDate instanceof Date) {
+    bookingTime = bookingDate;
+  } else {
+    bookingTime = new Date(bookingDate);
+  }
+  
+  const today = new Date();
+  const fiveDaysFromNow = new Date(today);
+  fiveDaysFromNow.setDate(today.getDate() + 5);
+  
+  // Set time to beginning of day for comparison
+  today.setHours(0, 0, 0, 0);
+  fiveDaysFromNow.setHours(23, 59, 59, 999);
+  bookingTime.setHours(0, 0, 0, 0);
+  
+  return bookingTime >= today && bookingTime <= fiveDaysFromNow;
+};
+
 // Utility function to check if a booking is still valid (event hasn't passed)
 const isBookingStillValid = (booking) => {
   // If there's no event date, consider it valid
@@ -50,6 +75,7 @@ const Plans = () => {
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(true); // Default to true for public pages
   const [bookingsUpdated, setBookingsUpdated] = useState(0); // State to track booking updates
   const [purchasedPlan, setPurchasedPlan] = useState(null); // State to track which plan was purchased
+  const [hasBookedThisWeek, setHasBookedThisWeek] = useState(false); // State to track if user has booked within current week
 
   const checkFreeTrialEligibility = useCallback(async (userId, phoneNumber) => {
     try {
@@ -242,31 +268,61 @@ const Plans = () => {
         try {
           await checkFreeTrialEligibility(currentUser.uid, currentUser.phoneNumber || '');
           
-          // Only check for recent bookings on dashboard pages
-          if (isOnDashboard) {
-            // Check if there's a recent booking to set purchasedPlan
-            const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
-            if (localBookings.length > 0) {
-              // Filter out passed events
-              const activeBookings = localBookings.filter(booking => !isEventDatePassed(booking.eventDate));
+          // Always check for recent bookings regardless of page
+          // Check if there's a recent booking to set purchasedPlan
+          const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+          console.log('Local bookings from localStorage:', localBookings);
+          
+          if (localBookings.length > 0) {
+            // Filter out passed events
+            const activeBookings = localBookings.filter(booking => !isEventDatePassed(booking.eventDate));
+            console.log('Active bookings:', activeBookings);
+            
+            if (activeBookings.length > 0) {
+              // Get the most recent active booking
+              const mostRecentBooking = activeBookings.reduce((latest, current) => {
+                const latestDate = new Date(latest.bookingDate || latest.createdAt);
+                const currentDate = new Date(current.bookingDate || current.createdAt);
+                return currentDate > latestDate ? current : latest;
+              });
               
-              if (activeBookings.length > 0) {
-                // Get the most recent active booking
-                const mostRecentBooking = activeBookings.reduce((latest, current) => {
-                  const latestDate = new Date(latest.bookingDate || latest.createdAt);
-                  const currentDate = new Date(current.bookingDate || current.createdAt);
-                  return currentDate > latestDate ? current : latest;
-                });
-                
-                // Set the purchased plan based on the most recent active booking
-                setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
-              } else {
-                // All events have passed, reset purchased plan
-                setPurchasedPlan(null);
-              }
+              console.log('Most recent booking:', mostRecentBooking);
+              
+              // Set the purchased plan based on the most recent active booking
+              setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
+              
+              // Check if user has booked within the current week (5 days)
+              const hasBookingThisWeek = localBookings.some(booking => 
+                isBookingWithinCurrentWeek(booking.bookingDate || booking.createdAt)
+              );
+              console.log('Has booking this week:', hasBookingThisWeek);
+              setHasBookedThisWeek(hasBookingThisWeek);
             } else {
-              // No bookings, reset purchased plan
+              // All events have passed, reset purchased plan
+              console.log('All events have passed, resetting state');
               setPurchasedPlan(null);
+              setHasBookedThisWeek(false);
+            }
+          } else {
+            // No bookings, reset purchased plan
+            console.log('No bookings found, resetting state');
+            setPurchasedPlan(null);
+            setHasBookedThisWeek(false);
+          }
+          
+          // Also check for a new booking that might have been set
+          const newBooking = localStorage.getItem('newBooking');
+          if (newBooking) {
+            try {
+              const booking = JSON.parse(newBooking);
+              console.log('Found new booking:', booking);
+              // Set the purchased plan regardless of event date
+              setPurchasedPlan(booking.eventName || 'Unknown Plan');
+              
+              // Set that user has booked this week
+              setHasBookedThisWeek(true);
+            } catch (e) {
+              console.error('Error parsing new booking:', e);
             }
           }
         } catch (error) {
@@ -275,8 +331,10 @@ const Plans = () => {
         }
       } else {
         // Reset eligibility for non-logged in users
+        console.log('No current user, resetting state');
         setIsEligibleForFreeTrial(true);
         setPurchasedPlan(null);
+        setHasBookedThisWeek(false);
       }
     });
 
@@ -294,8 +352,12 @@ const Plans = () => {
       if (newBooking) {
         try {
           const booking = JSON.parse(newBooking);
+          console.log('Found new booking in localStorage:', booking);
           // Set the purchased plan regardless of event date
           setPurchasedPlan(booking.eventName || 'Unknown Plan');
+          
+          // Set that user has booked this week
+          setHasBookedThisWeek(true);
         } catch (e) {
           console.error('Error parsing new booking:', e);
         }
@@ -310,6 +372,7 @@ const Plans = () => {
       
       // Check if any booked events have passed and reset purchasedPlan if so
       const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      console.log('Checking local bookings:', localBookings);
       if (localBookings.length > 0) {
         // Check if any booked events have passed
         const anyEventPassed = localBookings.some(booking => {
@@ -321,9 +384,17 @@ const Plans = () => {
         if (anyEventPassed) {
           setPurchasedPlan(null);
         }
+        
+        // Check if user has booked within the current week (5 days)
+        const hasBookingThisWeek = localBookings.some(booking => 
+          isBookingWithinCurrentWeek(booking.bookingDate || booking.createdAt)
+        );
+        console.log('Has booking this week (from localBookings check):', hasBookingThisWeek);
+        setHasBookedThisWeek(hasBookingThisWeek);
       } else {
         // No bookings, reset purchased plan
         setPurchasedPlan(null);
+        setHasBookedThisWeek(false);
       }
       
       // Check if 24 hours have passed since last booking and reset purchasedPlan if so
@@ -818,17 +889,18 @@ const Plans = () => {
               
               <div className="plan-footer">
                 <button
-                  className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''} ${!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan) ? 'disabled' : ''}`}
+                  className={`cta-button ${plan.freeTrial ? 'free-trial' : ''} ${plan.popular ? 'popular-btn' : ''} ${plan.freeTrial && !isEligibleForFreeTrial ? 'disabled' : ''} ${!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan || hasBookedThisWeek) ? 'disabled' : ''}`}
                   onClick={() => handlePayNow(plan)}
-                  disabled={plan.freeTrial && !isEligibleForFreeTrial || (!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan))}
+                  disabled={plan.freeTrial && !isEligibleForFreeTrial || (!plan.freeTrial && (hasBookedRecently(plan.name) || purchasedPlan || hasBookedThisWeek))}
                 >
                   <span className="button-text">
                     {plan.freeTrial ? (isEligibleForFreeTrial ? "Start Free Trial" : "Already Claimed") : 
-                     (purchasedPlan ? 
-                       (purchasedPlan === 'Monthly Membership' ? "Booked for 24 hrs" : "Booked for 24 hrs") : 
-                       (hasBookedRecently(plan.name) ? 
-                         (plan.name === 'Monthly Membership' ? "Booked for 24 hrs" : "Booked for 24 hrs") : 
-                         "Choose Plan"))}
+                     (hasBookedThisWeek ? "Booked for this week" :
+                      (purchasedPlan ? 
+                        (purchasedPlan === 'Monthly Membership' ? "Booked for this week" : "Booked for this week") : 
+                        (hasBookedRecently(plan.name) ? 
+                          (plan.name === 'Monthly Membership' ? "Booked for this week" : "Booked for this week") : 
+                          "Choose Plan")))}
                   </span>
                   <div className="button-arrow">→</div>
                 </button>

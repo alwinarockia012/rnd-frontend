@@ -2,6 +2,8 @@
     display: flex;
     gap: 1rem;
     padding: 0 2rem;
+    padding-top: 150px;
+    padding-bottom: 150px;
 }
 .left-t{
     display: flex;

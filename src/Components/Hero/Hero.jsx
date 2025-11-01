@@ -184,9 +184,6 @@ const Hero = () => {
               <Link to="/SignIn" style={styles.item} onClick={() => setMenuOpen(false)}>
                 Log in
               </Link>
-              <Link to="/fitness" style={styles.item} onClick={() => setMenuOpen(false)}>
-                Fitness Tracker
-              </Link>
               <Link to={isLoggedIn ? "/dashboard" : "/signup"} style={styles.cta} onClick={() => setMenuOpen(false)}>
                 {isLoggedIn ? "Explore" : "Sign Up"}
               </Link>
