@@ -54,7 +54,7 @@ app.use(cors({
     'http://*',
 
     // ✅ Add this line below for your Netlify site:
-    'https://rnd-alwin.netlify.app'
+    'https://runanddevelop.netlify.app'
   ],
   credentials: true,
   optionsSuccessStatus: 200
