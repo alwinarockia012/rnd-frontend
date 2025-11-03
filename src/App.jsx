@@ -30,6 +30,12 @@ import TicketVerification from './Components/TicketVerification/TicketVerificati
 import PlansPage from './Components/Plans/PlansPage';
 // Import the new FitnessTracker component
 import FitnessTracker from './Components/FitnessTracker/FitnessTracker';
+// Import the new PrivacyPolicy component
+import PrivacyPolicy from './Components/PrivacyPolicy/PrivacyPolicy';
+// Import the new TermsOfService component
+import TermsOfService from './Components/TermsOfService/TermsOfService';
+// Import the new FAQ component
+import FAQ from './Components/FAQ/FAQ';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -163,6 +169,12 @@ function App() {
           <Route path="/plans" element={<PlansPage />} />
           {/* Add the new Fitness Tracker route */}
           <Route path="/fitness" element={<FitnessTracker />} />
+          {/* Add the new Privacy Policy route */}
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          {/* Add the new Terms of Service route */}
+          <Route path="/terms" element={<TermsOfService />} />
+          {/* Add the new FAQ route */}
+          <Route path="/faq" element={<FAQ />} />
         </Routes>
       </Router>
     </ErrorBoundary>

@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FaFacebook,
-  FaTwitter,
   FaInstagram,
-  FaLinkedin,
   FaYoutube,
   FaMapMarkerAlt,
   FaPhone,
-  FaEnvelope,
   FaChevronDown,
-
 } from 'react-icons/fa';
 import './Footer.css';
 
@@ -94,34 +89,18 @@ const Footer = () => {
            
 
             <div className="social-links">
-              <a href="https://facebook.com/runanddevelop" className="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-                <FaFacebook />
-              </a>
-              <a href="https://twitter.com/" className="social-link" aria-label="Twitter" target="_blank" rel="noopener noreferrer">
-                <FaTwitter />
-              </a>
               <a href="https://www.instagram.com/run_and_develop?igsh=MW9pdzV0YXBlZGZtaA==" className="social-link" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
                 <FaInstagram />
               </a>
-              <a href="https://linkedin.com/" className="social-link" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
-                <FaLinkedin />
-              </a>
-              <a href="https://youtube.com/" className="social-link" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
+             
+              <a href="https://www.youtube.com/@RunAnddevelop" className="social-link" aria-label="YouTube" target="_blank" rel="noopener noreferrer">
                 <FaYoutube />
               </a>
             </div>
           </div>
 
           {/* Programs */}
-          <CollapsibleSection title="Programs" defaultOpen={isDesktop} forceOpen={isDesktop}>
-            <ul className="footer-links">
-              <li><Link to="/programs">Running Programs</Link></li>
-              <li><Link to="/plans">Training Plans</Link></li>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/testimonials">Testimonials</Link></li>
-              <li><Link to="/contact">Contact</Link></li>
-            </ul>
-          </CollapsibleSection>
+          {/* Removed as per user request */}
 
           {/* Support */}
           <CollapsibleSection title="Support" defaultOpen={isDesktop} forceOpen={isDesktop}>
@@ -144,10 +123,7 @@ const Footer = () => {
                 <FaPhone className="contact-icon" />
                 <span>+91 82708 12842</span>
               </div>
-              <div className="contact-item">
-                <FaEnvelope className="contact-icon" />
-                <span>info@runanddevelop.com</span>
-              </div>
+
             </div>
           </CollapsibleSection>
         </div>
@@ -162,7 +138,6 @@ const Footer = () => {
             <div className="footer-bottom-links">
               <Link to="/privacy">Privacy</Link>
               <Link to="/terms">Terms</Link>
-              <Link to="/cookies">Cookies</Link>
             </div>
           </div>
         </div>

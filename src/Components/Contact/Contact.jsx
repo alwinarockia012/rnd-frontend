@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import { Element } from 'react-scroll';
-import firebaseService from '../../services/firebaseService';
 import Notification from '../Notification/Notification';
 import './Contact.css';
 
 const Contact = () => {
-  const [submitting, setSubmitting] = useState(false);
   const [notification, setNotification] = useState(null);
-
-  const showNotification = (message, type = 'info') => {
-    setNotification({ message, type });
-  };
 
   const closeNotification = () => {
     setNotification(null);
@@ -38,7 +31,7 @@ const Contact = () => {
       </div>
 
       {/* Contact Info */}
-      <div className="contact-box contact-info-box">
+      <div className="contact-info-box">
         <h3>Contact Us</h3>
         <a
           href="https://www.instagram.com/run_and_develop?igsh=MW9pdzV0YXBlZGZtaA=="

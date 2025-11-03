@@ -1,4 +1,4 @@
-.privacy-policy-page {
+.terms-of-service-page {
   background-color: #1a1a1a;
   color: #ffffff;
   min-height: 100vh;
@@ -6,7 +6,7 @@
   flex-direction: column;
 }
 
-.privacy-policy-container {
+.terms-of-service-container {
   flex: 1;
   padding: 20px;
   max-width: 1200px;
@@ -14,7 +14,7 @@
   width: 100%;
 }
 
-.privacy-policy-content {
+.terms-of-service-content {
   background: rgba(30, 30, 30, 0.8);
   border-radius: 15px;
   padding: 30px;
@@ -24,7 +24,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.privacy-policy-content h1 {
+.terms-of-service-content h1 {
   color: #F15A24;
   text-align: center;
   font-size: 2.5rem;
@@ -39,7 +39,7 @@
   font-style: italic;
 }
 
-.privacy-policy-content h2 {
+.terms-of-service-content h2 {
   color: #F15A24;
   margin-top: 30px;
   margin-bottom: 15px;
@@ -47,47 +47,47 @@
   font-weight: bold;
 }
 
-.privacy-policy-content p {
+.terms-of-service-content p {
   line-height: 1.6;
   margin-bottom: 15px;
   font-size: 1rem;
   color: #e0e0e0;
 }
 
-.privacy-policy-content ul {
+.terms-of-service-content ul {
   margin-bottom: 20px;
   padding-left: 20px;
 }
 
-.privacy-policy-content li {
+.terms-of-service-content li {
   margin-bottom: 8px;
   line-height: 1.5;
   color: #e0e0e0;
 }
 
-.privacy-policy-content a {
+.terms-of-service-content a {
   color: #F15A24;
   text-decoration: none;
 }
 
-.privacy-policy-content a:hover {
+.terms-of-service-content a:hover {
   text-decoration: underline;
 }
 
 @media (max-width: 768px) {
-  .privacy-policy-container {
+  .terms-of-service-container {
     padding: 15px;
   }
   
-  .privacy-policy-content {
+  .terms-of-service-content {
     padding: 20px;
   }
   
-  .privacy-policy-content h1 {
+  .terms-of-service-content h1 {
     font-size: 2rem;
   }
   
-  .privacy-policy-content h2 {
+  .terms-of-service-content h2 {
     font-size: 1.3rem;
   }
 }
