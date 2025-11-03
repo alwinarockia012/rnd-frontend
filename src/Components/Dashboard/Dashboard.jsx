@@ -489,7 +489,7 @@ Thank you for booking with R&D - Run and Develop!
               </div>
             </motion.div>
 
-            {/* Fitness Tracker Card */}
+            {/* Fitness Tracker Card with My Tickets */}
             <motion.div className="events-card card-glow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
               <div className="card-header">
                 <h3>Fitness & Nutrition</h3>
@@ -505,6 +505,142 @@ Thank you for booking with R&D - Run and Develop!
                   <button className="join-event-btn" onClick={() => navigate('/fitness')}>
                     Open Tracker
                   </button>
+                </div>
+              </div>
+              
+              {/* My Tickets Section */}
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '1rem', paddingTop: '1rem' }}>
+                <div className="card-header" style={{ padding: '0.5rem 0' }}>
+                  <FaTicketAlt className="card-icon" />
+                  <h3>My Tickets</h3>
+                </div>
+                <div className="events-list" style={{ maxHeight: 'none', minHeight: 'auto' }}>
+                  {bookings && bookings.length > 0 ? (
+                    (() => {
+                      // Sort bookings by event date (descending - newest first)
+                      const sortedBookings = [...bookings].sort((a, b) => {
+                        // Sort by event date (descending - newest first)
+                        // Handle different date formats for sorting
+                        let dateA, dateB;
+                        
+                        if (a.eventDate instanceof Date) {
+                          dateA = a.eventDate;
+                        } else if (a.eventDate.toDate && typeof a.eventDate.toDate === 'function') {
+                          dateA = a.eventDate.toDate();
+                        } else if (typeof a.eventDate === 'string') {
+                          dateA = new Date(a.eventDate);
+                        } else if (a.eventDate) {
+                          dateA = new Date(a.eventDate);
+                        } else {
+                          dateA = new Date(); // Default to now if no date
+                        }
+                        
+                        if (b.eventDate instanceof Date) {
+                          dateB = b.eventDate;
+                        } else if (b.eventDate.toDate && typeof b.eventDate.toDate === 'function') {
+                          dateB = b.eventDate.toDate();
+                        } else if (typeof b.eventDate === 'string') {
+                          dateB = new Date(b.eventDate);
+                        } else if (b.eventDate) {
+                          dateB = new Date(b.eventDate);
+                        } else {
+                          dateB = new Date(); // Default to now if no date
+                        }
+                        
+                        return dateB - dateA; // Descending order
+                      });
+                      
+                      // Get only the most recent booking
+                      const recentBooking = sortedBookings[0];
+                      
+                      // Handle date display for the recent booking
+                      let displayDate;
+                      if (recentBooking.eventDate instanceof Date) {
+                        displayDate = recentBooking.eventDate;
+                      } else if (recentBooking.eventDate.toDate && typeof recentBooking.eventDate.toDate === 'function') {
+                        displayDate = recentBooking.eventDate.toDate();
+                      } else if (typeof recentBooking.eventDate === 'string') {
+                        displayDate = new Date(recentBooking.eventDate);
+                      } else if (recentBooking.eventDate) {
+                        displayDate = new Date(recentBooking.eventDate);
+                      } else {
+                        displayDate = new Date(); // Default to now if no date
+                      }
+                      
+                      return (
+                        <div key={recentBooking.id} className="ticket-item-container" 
+                             style={{ 
+                               padding: '0.75rem', 
+                               marginBottom: '0.5rem',
+                               minHeight: 'auto'
+                             }}>
+                          {/* Compact Ticket Info */}
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            flexWrap: 'wrap'
+                          }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <h4 style={{ 
+                                margin: '0 0 0.25rem 0', 
+                                fontSize: '0.95rem',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}>
+                                {recentBooking.eventName || 'Event Name'}
+                              </h4>
+                              <p className="event-details" style={{ 
+                                margin: 0, 
+                                fontSize: '0.8rem',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}>
+                                {displayDate ? formatDate(displayDate) : 'Date not available'}
+                                • {recentBooking.eventTime || 'Time not available'}
+                              </p>
+                              <p className="booking-id-preview" style={{ 
+                                margin: '0.1rem 0 0 0', 
+                                fontSize: '0.7rem' 
+                              }}>
+                                ID: {recentBooking.id ? recentBooking.id.substring(0, 8) : 'N/A'}
+                              </p>
+                              <p className="event-status" style={{ 
+                                margin: '0.1rem 0 0 0', 
+                                fontSize: '0.7rem' 
+                              }}>
+                                Status: <span className={recentBooking.status || 'confirmed'}>
+                                  {recentBooking.status ? recentBooking.status.charAt(0).toUpperCase() + recentBooking.status.slice(1) : 'Confirmed'}
+                                </span>
+                              </p>
+                            </div>
+                            
+                            {/* View Ticket Button */}
+                            <button 
+                              onClick={() => {
+                                openFullScreenTicket(recentBooking);
+                              }}
+                              className="view-ticket-btn"
+                            >
+                              View
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="no-tickets-container">
+                      <p className="no-tickets-message">No tickets found. Book your slots to get started!</p>
+                      <button 
+                        className="book-event-btn"
+                        onClick={() => navigate('/plans')}
+                      >
+                        Book Your Slots
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -653,47 +789,9 @@ Thank you for booking with R&D - Run and Develop!
                         
                         const mostRecentPaidBooking = sortedPaidBookings[0];
                         
-                        // Calculate plan start and end dates
-                        const planStartDate = mostRecentPaidBooking.bookingDate || mostRecentPaidBooking.eventDate;
-                        let planEndDate = null;
-                        
-                        // Determine plan duration based on plan name or other indicators
-                        let planDuration = 30; // Default to 30 days (monthly)
-                        
-                        // Check plan name for duration indicators
-                        const planName = mostRecentPaidBooking.eventName || '';
-                        if (planName.toLowerCase().includes('week') || planName.toLowerCase().includes('weekly')) {
-                          planDuration = 7; // Weekly plan
-                        } else if (planName.toLowerCase().includes('month') || planName.toLowerCase().includes('monthly')) {
-                          planDuration = 30; // Monthly plan
-                        } else if (planName.toLowerCase().includes('year') || planName.toLowerCase().includes('annual')) {
-                          planDuration = 365; // Annual plan
-                        }
-                        
-                        // If we have a valid start date, calculate end date based on plan duration
-                        if (planStartDate) {
-                          planEndDate = new Date(planStartDate);
-                          planEndDate.setDate(planEndDate.getDate() + planDuration);
-                        }
-                        
-                        // Format dates as dd/mm/yy
-                        const formatDate = (date) => {
-                          if (!date || !(date instanceof Date)) return 'Date not available';
-                          const day = String(date.getDate()).padStart(2, '0');
-                          const month = String(date.getMonth() + 1).padStart(2, '0');
-                          const year = String(date.getFullYear()).slice(-2);
-                          return `${day}/${month}/${year}`;
-                        };
-                        
-                        const startDateFormatted = planStartDate ? formatDate(new Date(planStartDate)) : 'Date not available';
-                        const endDateFormatted = planEndDate ? formatDate(planEndDate) : 'Date not available';
-                        
                         return (
                           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                             <h4>{mostRecentPaidBooking.eventName || 'Paid Plan'}</h4>
-                            <p>
-                              {startDateFormatted} - {endDateFormatted}
-                            </p>
                             <button 
                               className="upgrade-btn" 
                               onClick={() => navigate('/plans')}
@@ -721,35 +819,12 @@ Thank you for booking with R&D - Run and Develop!
                   ) : bookings && bookings.some(booking => booking.isFreeTrial) ? (
                     // Show free trial only if no paid bookings exist
                     (() => {
-                      // Find the free trial booking to get dates
+                      // Find the free trial booking to get plan name
                       const freeTrialBooking = bookings.find(booking => booking.isFreeTrial);
-                      
-                      // Calculate plan start and end dates
-                      const planStartDate = freeTrialBooking?.bookingDate || freeTrialBooking?.eventDate;
-                      let planEndDate = null;
-                      
-                      // If we have a valid start date, calculate end date (7 days for free trial)
-                      if (planStartDate) {
-                        planEndDate = new Date(planStartDate);
-                        planEndDate.setDate(planEndDate.getDate() + 7); // Assuming 7-day free trial
-                      }
-                      
-                      // Format dates as dd/mm/yy
-                      const formatDate = (date) => {
-                        if (!date || !(date instanceof Date)) return 'Date not available';
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const year = String(date.getFullYear()).slice(-2);
-                        return `${day}/${month}/${year}`;
-                      };
-                      
-                      const startDateFormatted = planStartDate ? formatDate(new Date(planStartDate)) : 'Date not available';
-                      const endDateFormatted = planEndDate ? formatDate(planEndDate) : 'Date not available';
-                      
+                        
                       return (
                         <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                           <h4>Free Trial</h4>
-                          <p>{startDateFormatted} - {endDateFormatted}</p>
                           <button 
                             className="upgrade-btn" 
                             onClick={() => navigate('/plans')}
@@ -776,143 +851,7 @@ Thank you for booking with R&D - Run and Develop!
               </div>
             </motion.div>
 
-            {/* My Tickets Card (MODIFIED - Compact view with View Ticket button) */}
-            <motion.div className="events-card tickets-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-              <div className="card-header tickets-header">
-                <FaTicketAlt className="card-icon" />
-                <h3>My Tickets</h3>
-                <div className="ticket-actions">
-                </div>
-              </div>
-              <div className="events-list">
-                {bookings && bookings.length > 0 ? (
-                  (() => {
-                    // Sort bookings by event date (descending - newest first)
-                    const sortedBookings = [...bookings].sort((a, b) => {
-                      // Sort by event date (descending - newest first)
-                      // Handle different date formats for sorting
-                      let dateA, dateB;
-                      
-                      if (a.eventDate instanceof Date) {
-                        dateA = a.eventDate;
-                      } else if (a.eventDate.toDate && typeof a.eventDate.toDate === 'function') {
-                        dateA = a.eventDate.toDate();
-                      } else if (typeof a.eventDate === 'string') {
-                        dateA = new Date(a.eventDate);
-                      } else if (a.eventDate) {
-                        dateA = new Date(a.eventDate);
-                      } else {
-                        dateA = new Date(); // Default to now if no date
-                      }
-                      
-                      if (b.eventDate instanceof Date) {
-                        dateB = b.eventDate;
-                      } else if (b.eventDate.toDate && typeof b.eventDate.toDate === 'function') {
-                        dateB = b.eventDate.toDate();
-                      } else if (typeof b.eventDate === 'string') {
-                        dateB = new Date(b.eventDate);
-                      } else if (b.eventDate) {
-                        dateB = new Date(b.eventDate);
-                      } else {
-                        dateB = new Date(); // Default to now if no date
-                      }
-                      
-                      return dateB - dateA; // Descending order
-                    });
-                    
-                    // Get only the most recent booking
-                    const recentBooking = sortedBookings[0];
-                    
-                    // Handle date display for the recent booking
-                    let displayDate;
-                    if (recentBooking.eventDate instanceof Date) {
-                      displayDate = recentBooking.eventDate;
-                    } else if (recentBooking.eventDate.toDate && typeof recentBooking.eventDate.toDate === 'function') {
-                      displayDate = recentBooking.eventDate.toDate();
-                    } else if (typeof recentBooking.eventDate === 'string') {
-                      displayDate = new Date(recentBooking.eventDate);
-                    } else if (recentBooking.eventDate) {
-                      displayDate = new Date(recentBooking.eventDate);
-                    } else {
-                      displayDate = new Date(); // Default to now if no date
-                    }
-                    
-                    return (
-                      <div key={recentBooking.id} className="ticket-item-container" 
-                           style={{ 
-                             padding: '0.75rem', 
-                             marginBottom: '0.5rem',
-                             minHeight: 'auto'
-                           }}>
-                        {/* Compact Ticket Info */}
-                        <div style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'center',
-                          flexWrap: 'wrap'
-                        }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <h4 style={{ 
-                              margin: '0 0 0.25rem 0', 
-                              fontSize: '0.95rem',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
-                              {recentBooking.eventName || 'Event Name'}
-                            </h4>
-                            <p className="event-details" style={{ 
-                              margin: 0, 
-                              fontSize: '0.8rem',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
-                              {displayDate ? formatDate(displayDate) : 'Date not available'}
-                              • {recentBooking.eventTime || 'Time not available'}
-                            </p>
-                            <p className="booking-id-preview" style={{ 
-                              margin: '0.1rem 0 0 0', 
-                              fontSize: '0.7rem' 
-                            }}>
-                              ID: {recentBooking.id ? recentBooking.id.substring(0, 8) : 'N/A'}
-                            </p>
-                            <p className="event-status" style={{ 
-                              margin: '0.1rem 0 0 0', 
-                              fontSize: '0.7rem' 
-                            }}>
-                              Status: <span className={recentBooking.status || 'confirmed'}>
-                                {recentBooking.status ? recentBooking.status.charAt(0).toUpperCase() + recentBooking.status.slice(1) : 'Confirmed'}
-                              </span>
-                            </p>
-                          </div>
-                          
-                          {/* View Ticket Button */}
-                          <button 
-                            onClick={() => {
-                              openFullScreenTicket(recentBooking);
-                            }}
-                            className="view-ticket-btn"
-                          >
-                            View
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <div className="no-tickets-container">
-                    <p className="no-tickets-message">No tickets found. Book your slots to get started!</p>
-                    <button 
-                      className="book-event-btn"
-                      onClick={() => navigate('/plans')}
-                    >
-                      Book Your Slots
-                    </button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
+
 
 
           </div>

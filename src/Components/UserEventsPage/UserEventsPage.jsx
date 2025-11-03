@@ -370,7 +370,7 @@ function UserEventsPage() {
     return false;
   };
 
-  // Function to check if user has booked within the last 24 hours based on plan (excluding free trials)
+  // Function to check if user has booked within the last 5 days based on plan (excluding free trials)
   const hasBookedRecently = useCallback((planName) => {
     // Get bookings from localStorage
     const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
@@ -381,9 +381,9 @@ function UserEventsPage() {
     
     // Get current time for comparison
     const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
+    const fiveDaysAgo = new Date(now.getTime() - (5 * 24 * 60 * 60 * 1000)); // 5 days ago
     
-    // Check if any booking was made within the last 24 hours for this plan (excluding free trials)
+    // Check if any booking was made within the last 5 days for this plan (excluding free trials)
     return localBookings.some(booking => {
       // Skip free trial bookings
       if (booking.mode === 'free_trial') {
@@ -395,7 +395,7 @@ function UserEventsPage() {
         return false;
       }
       
-      // Check if booking was made within the last 24 hours
+      // Check if booking was made within the last 5 days
       const bookingDate = booking.bookingDate || booking.createdAt;
       if (bookingDate) {
         let bookingTime;
@@ -407,12 +407,163 @@ function UserEventsPage() {
           bookingTime = new Date(bookingDate);
         }
         
-        return bookingTime >= twentyFourHoursAgo && bookingTime <= now;
+        return bookingTime >= fiveDaysAgo && bookingTime <= now;
       }
       
       return false;
     });
   }, []);
+
+  // Function to check if user has booked a monthly plan within the last 30 days (excluding free trials)
+  const hasBookedMonthlyRecently = useCallback(() => {
+    // Get bookings from localStorage
+    const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+    
+    if (!localBookings || localBookings.length === 0) {
+      return false;
+    }
+    
+    // Get current time for comparison
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
+    
+    // Check if any booking was made within the last 30 days for Monthly Membership (excluding free trials)
+    return localBookings.some(booking => {
+      // Skip free trial bookings
+      if (booking.mode === 'free_trial') {
+        return false;
+      }
+      
+      // Check if booking is for Monthly Membership
+      if (booking.eventName !== 'Monthly Membership') {
+        return false;
+      }
+      
+      // Check if booking was made within the last 30 days
+      const bookingDate = booking.bookingDate || booking.createdAt;
+      if (bookingDate) {
+        let bookingTime;
+        if (bookingDate.toDate && typeof bookingDate.toDate === 'function') {
+          bookingTime = bookingDate.toDate();
+        } else if (bookingDate instanceof Date) {
+          bookingTime = bookingDate;
+        } else {
+          bookingTime = new Date(bookingDate);
+        }
+        
+        return bookingTime >= thirtyDaysAgo && bookingTime <= now;
+      }
+      
+      return false;
+    });
+  }, []);
+
+  // New function to check if user booked within the last 5 days (for regular plans)
+  const hasUserBookedWithinFiveDays = (eventId, eventDate) => {
+    if (!userBookings || userBookings.length === 0) {
+      return false;
+    }
+
+    const targetEventId = String(eventId);
+    const now = new Date();
+    const fiveDaysAgo = new Date(now.getTime() - (5 * 24 * 60 * 60 * 1000)); // 5 days ago
+    
+    // Check if any booking was made within the last 5 days
+    return userBookings.some(booking => {
+      // First check if the booking is for the target event
+      let isTargetEvent = false;
+      
+      // Check multiple possible field names
+      const bookingEventId = booking.eventId || booking.event_id || booking.eventID;
+      if (bookingEventId) {
+        isTargetEvent = String(bookingEventId) === targetEventId;
+      }
+      
+      // If this booking is not for the target event, skip it
+      if (!isTargetEvent) {
+        return false;
+      }
+      
+      // If eventDate is provided, also check if the booking is for the same date
+      if (eventDate) {
+        const bookingEventDate = booking.eventDate;
+        if (bookingEventDate) {
+          let bookingDate;
+          if (bookingEventDate.toDate && typeof bookingEventDate.toDate === 'function') {
+            bookingDate = bookingEventDate.toDate();
+          } else if (bookingEventDate instanceof Date) {
+            bookingDate = bookingEventDate;
+          } else {
+            bookingDate = new Date(bookingEventDate);
+          }
+          
+          // Compare dates
+          const eventDateObj = new Date(eventDate);
+          if (bookingDate.toDateString() !== eventDateObj.toDateString()) {
+            // Different date, so not the same event instance
+            return false;
+          }
+        }
+      }
+      
+      // Now check if the booking was made within the last 5 days
+      const bookingCreationDate = booking.bookingDate || booking.createdAt;
+      if (bookingCreationDate) {
+        let bookingTime;
+        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+          bookingTime = bookingCreationDate.toDate();
+        } else if (bookingCreationDate instanceof Date) {
+          bookingTime = bookingCreationDate;
+        } else {
+          bookingTime = new Date(bookingCreationDate);
+        }
+        
+        return bookingTime >= fiveDaysAgo && bookingTime <= now;
+      }
+      
+      return false;
+    });
+  };
+
+  // Function to check if user booked a monthly subscription within the last 30 days
+  const hasUserBookedMonthlyWithinThirtyDays = () => {
+    if (!userBookings || userBookings.length === 0) {
+      return false;
+    }
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
+    
+    // Check if any booking was made within the last 30 days for Monthly Membership
+    return userBookings.some(booking => {
+      // Check if booking is for Monthly Membership
+      if (booking.eventName !== 'Monthly Membership') {
+        return false;
+      }
+      
+      // Skip free trial bookings
+      if (booking.mode === 'free_trial') {
+        return false;
+      }
+      
+      // Now check if the booking was made within the last 30 days
+      const bookingCreationDate = booking.bookingDate || booking.createdAt;
+      if (bookingCreationDate) {
+        let bookingTime;
+        if (bookingCreationDate.toDate && typeof bookingCreationDate.toDate === 'function') {
+          bookingTime = bookingCreationDate.toDate();
+        } else if (bookingCreationDate instanceof Date) {
+          bookingTime = bookingCreationDate;
+        } else {
+          bookingTime = new Date(bookingCreationDate);
+        }
+        
+        return bookingTime >= thirtyDaysAgo && bookingTime <= now;
+      }
+      
+      return false;
+    });
+  };
 
   // New function to check if user booked today (regardless of event)
   const hasUserBookedToday = (eventId, eventDate) => {
@@ -788,8 +939,9 @@ function UserEventsPage() {
                                    hasUserBookedToday(event.id, event.date)}
                         >
                           {isBookingClosed(event) ? 'Bookings Closed' :
-                           checkTodaysBookingFromStorage(event.id) ? 'Booked for this week' : 
-                           hasUserBookedToday(event.id, event.date) ? 'Booked for this week' :
+                           checkTodaysBookingFromStorage(event.id) ? 'Already Booked' : 
+                           hasUserBookedToday(event.id, event.date) ? 
+                             (hasUserBookedMonthlyWithinThirtyDays() ? 'Booked for a month' : 'Already Booked') :
                            'Book Your Slot'}
                         </button>
                       </div>

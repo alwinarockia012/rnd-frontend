@@ -8,6 +8,7 @@ import { auth, db } from '../../firebase';
 import Notification from '../Notification/Notification';
 import SignUpNotification from '../SignUpNotification/SignUpNotification';
 import PlanNotification from './PlanNotification';
+import FreeTrialNotification from './FreeTrialNotification'; // Add this import
 import PaymentButton from '../Payments/PaymentButton';
 import { getCurrentUser } from '../../services/paymentService';
 import firebaseService from '../../services/firebaseService';
@@ -71,6 +72,7 @@ const Plans = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showSignUpNotification, setShowSignUpNotification] = useState(false);
   const [showPlanNotification, setShowPlanNotification] = useState(false);
+  const [showFreeTrialNotification, setShowFreeTrialNotification] = useState(false); // Add this state
   const [notification, setNotification] = useState(null);
   const [isEligibleForFreeTrial, setIsEligibleForFreeTrial] = useState(true); // Default to true for public pages
   const [bookingsUpdated, setBookingsUpdated] = useState(0); // State to track booking updates
@@ -214,7 +216,7 @@ const Plans = () => {
     });
   }, []);
 
-  // Function to check if user has booked a monthly plan within the last 24 hours (excluding free trials)
+  // Function to check if user has booked a monthly plan within the last 30 days (excluding free trials)
   const hasBookedMonthlyRecently = useCallback(() => {
     // Get bookings from localStorage
     const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
@@ -225,9 +227,9 @@ const Plans = () => {
     
     // Get current time for comparison
     const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
     
-    // Check if any booking was made within the last 24 hours for Monthly Membership (excluding free trials)
+    // Check if any booking was made within the last 30 days for Monthly Membership (excluding free trials)
     return localBookings.some(booking => {
       // Skip free trial bookings
       if (booking.mode === 'free_trial') {
@@ -239,7 +241,7 @@ const Plans = () => {
         return false;
       }
       
-      // Check if booking was made within the last 24 hours
+      // Check if booking was made within the last 30 days
       const bookingDate = booking.bookingDate || booking.createdAt;
       if (bookingDate) {
         let bookingTime;
@@ -251,7 +253,7 @@ const Plans = () => {
           bookingTime = new Date(bookingDate);
         }
         
-        return bookingTime >= twentyFourHoursAgo && bookingTime <= now;
+        return bookingTime >= thirtyDaysAgo && bookingTime <= now;
       }
       
       return false;
@@ -339,11 +341,120 @@ const Plans = () => {
     });
 
     return () => unsubscribe();
-  }, [checkFreeTrialEligibility, hasBookedRecently, bookingsUpdated]);
+  }, [checkFreeTrialEligibility, hasBookedRecently, hasBookedMonthlyRecently, bookingsUpdated]);
+
+  // Add useEffect to check for refresh flags when component mounts
+  useEffect(() => {
+    const checkForRefreshFlags = () => {
+      // Check for refresh flag
+      const shouldRefresh = localStorage.getItem('refreshBookings');
+      if (shouldRefresh === 'true') {
+        // Trigger a refresh by updating bookingsUpdated
+        setBookingsUpdated(prev => prev + 1);
+      }
+      
+      // Check for new booking flag (set after successful payment)
+      const newBooking = localStorage.getItem('newBooking');
+      if (newBooking) {
+        try {
+          const booking = JSON.parse(newBooking);
+          console.log('Found new booking on mount:', booking);
+          // Set the purchased plan regardless of event date
+          setPurchasedPlan(booking.eventName || 'Unknown Plan');
+          
+          // Set that user has booked this week
+          setHasBookedThisWeek(true);
+        } catch (e) {
+          console.error('Error parsing new booking on mount:', e);
+        }
+      }
+      
+      // Check for event updates flag (set when events are updated in admin)
+      const eventsUpdated = localStorage.getItem('eventsUpdated');
+      if (eventsUpdated === 'true') {
+        // Reset purchased plan when events are updated
+        setPurchasedPlan(null);
+      }
+      
+      // Check for latest event booking (new approach)
+      const latestEventBooking = localStorage.getItem('latestEventBooking');
+      if (latestEventBooking) {
+        // Trigger a refresh by updating bookingsUpdated
+        setBookingsUpdated(prev => prev + 1);
+      }
+      
+      // Check for force refresh flag
+      const forceRefresh = localStorage.getItem('forceRefresh');
+      if (forceRefresh === 'true') {
+        // Clear the flag and trigger refresh
+        localStorage.removeItem('forceRefresh');
+        setBookingsUpdated(prev => prev + 1);
+      }
+      
+      // Check for existing bookings in localStorage and update state immediately
+      const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+      if (localBookings.length > 0) {
+        // Filter out passed events
+        const activeBookings = localBookings.filter(booking => !isEventDatePassed(booking.eventDate));
+        console.log('Active bookings on mount:', activeBookings);
+        
+        if (activeBookings.length > 0) {
+          // Get the most recent active booking
+          const mostRecentBooking = activeBookings.reduce((latest, current) => {
+            const latestDate = new Date(latest.bookingDate || latest.createdAt);
+            const currentDate = new Date(current.bookingDate || current.createdAt);
+            return currentDate > latestDate ? current : latest;
+          });
+          
+          console.log('Most recent booking on mount:', mostRecentBooking);
+          
+          // Set the purchased plan based on the most recent active booking
+          setPurchasedPlan(mostRecentBooking.eventName || 'Unknown Plan');
+          
+          // Check if user has booked within the current week (5 days)
+          const hasBookingThisWeek = localBookings.some(booking => 
+            isBookingWithinCurrentWeek(booking.bookingDate || booking.createdAt)
+          );
+          console.log('Has booking this week on mount:', hasBookingThisWeek);
+          setHasBookedThisWeek(hasBookingThisWeek);
+        }
+      }
+      
+      // Also check if user has booked a monthly subscription within 30 days
+      const hasMonthlyBooking = hasBookedMonthlyRecently();
+      if (hasMonthlyBooking) {
+        console.log('User has booked monthly subscription within 30 days');
+        // If user has booked monthly, ensure the state reflects this
+        const localBookings = JSON.parse(localStorage.getItem('eventBookings') || '[]');
+        if (localBookings.length > 0) {
+          const monthlyBookings = localBookings.filter(booking => 
+            booking.eventName === 'Monthly Membership' && 
+            booking.mode !== 'free_trial'
+          );
+          
+          if (monthlyBookings.length > 0) {
+            // Set purchased plan to Monthly Membership
+            setPurchasedPlan('Monthly Membership');
+            setHasBookedThisWeek(true);
+          }
+        }
+      }
+    };
+    
+    // Check immediately when component mounts
+    checkForRefreshFlags();
+  }, [hasBookedMonthlyRecently]);
 
   // Check for changes in bookings and events
   useEffect(() => {
     const checkForBookingChanges = () => {
+      // Check for force refresh flag
+      const forceRefresh = localStorage.getItem('forceRefresh');
+      if (forceRefresh === 'true') {
+        // Clear the flag
+        localStorage.removeItem('forceRefresh');
+      }
+      
       // Update the state to trigger a re-render
       setBookingsUpdated(prev => prev + 1);
       
@@ -525,6 +636,7 @@ const Plans = () => {
     }
   };
 
+  // Modified handleClosePlanNotification to handle the special case
   const handleClosePlanNotification = () => {
     setShowPlanNotification(false);
     setSelectedPlan(null);
@@ -639,6 +751,12 @@ const Plans = () => {
     // More reliable detection using the specific class
     const isOnDashboard = document.querySelector('.plans-page') !== null;
     
+    // If user is eligible for free trial and trying to pay for a paid plan, show notification
+    if (isEligibleForFreeTrial && !plan.freeTrial) {
+      setShowFreeTrialNotification(true);
+      return;
+    }
+    
     if (!isOnDashboard) {
       // On landing page, show signup notification for all plans
       setShowSignUpNotification(true);
@@ -659,6 +777,67 @@ const Plans = () => {
         setSelectedPlan(plan);
         setShowPaymentModal(true);
       }
+    }
+  };
+
+  // Function to handle when user wants to claim their free trial
+  const handleClaimFreeTrial = () => {
+    // Find the free trial plan
+    const freeTrialPlan = plansData.find(plan => plan.freeTrial);
+    if (freeTrialPlan) {
+      // Close the free trial notification
+      setShowFreeTrialNotification(false);
+      
+      // If we're on the dashboard, directly create the free trial booking
+      const isOnDashboard = document.querySelector('.plans-page') !== null;
+      if (isOnDashboard) {
+        setSelectedPlan(freeTrialPlan);
+        handleFreeTrialBooking();
+      } else {
+        // On landing page, show signup notification
+        setSelectedPlan(freeTrialPlan);
+        setShowSignUpNotification(true);
+      }
+    }
+  };
+
+  // Function to close the free trial notification
+  const handleCloseFreeTrialNotification = () => {
+    setShowFreeTrialNotification(false);
+  };
+
+  // Function to handle free trial when user clicks "Get Free Trial" from special notification
+  const handleGetFreeTrialFromNotification = () => {
+    // Find the free trial plan
+    const freeTrialPlan = plansData.find(plan => plan.freeTrial);
+    if (freeTrialPlan) {
+      // Close the current notification
+      setShowPlanNotification(false);
+      setSelectedPlan(null);
+      
+      // Clear the pending plan
+      localStorage.removeItem('pendingPlan');
+      
+      // If we're on the dashboard, directly create the free trial booking
+      const isOnDashboard = document.querySelector('.plans-page') !== null;
+      if (isOnDashboard) {
+        setSelectedPlan(freeTrialPlan);
+        handleFreeTrialBooking();
+      } else {
+        // On landing page, show signup notification
+        setSelectedPlan(freeTrialPlan);
+        setShowSignUpNotification(true);
+      }
+    }
+  };
+
+  // Function to show notification with free trial option
+  const showNotificationWithFreeTrialOption = () => {
+    // Find the free trial plan
+    const freeTrialPlan = plansData.find(plan => plan.freeTrial);
+    if (freeTrialPlan) {
+      setSelectedPlan(freeTrialPlan);
+      setShowPlanNotification(true);
     }
   };
 
@@ -806,6 +985,13 @@ const Plans = () => {
         />
       )}
       
+      {showFreeTrialNotification && (
+        <FreeTrialNotification
+          onClose={handleCloseFreeTrialNotification}
+          onClaimFreeTrial={handleClaimFreeTrial}
+        />
+      )}
+      
       <div className="plans-background">
         <div className="blur plans-blur-1"></div>
         <div className="blur plans-blur-2"></div>
@@ -895,11 +1081,12 @@ const Plans = () => {
                 >
                   <span className="button-text">
                     {plan.freeTrial ? (isEligibleForFreeTrial ? "Start Free Trial" : "Already Claimed") : 
-                     (hasBookedThisWeek ? "Booked for this week" :
+                     (hasBookedThisWeek ? 
+                       (hasBookedMonthlyRecently() ? "Booked for a month" : "Booked for this week") :
                       (purchasedPlan ? 
-                        (purchasedPlan === 'Monthly Membership' ? "Booked for this week" : "Booked for this week") : 
+                        (hasBookedMonthlyRecently() ? "Booked for a month" : "Booked for this week") : 
                         (hasBookedRecently(plan.name) ? 
-                          (plan.name === 'Monthly Membership' ? "Booked for this week" : "Booked for this week") : 
+                          (plan.name === 'Monthly Membership' ? "Booked for a month" : "Booked for this week") : 
                           "Choose Plan")))}
                   </span>
                   <div className="button-arrow">→</div>
