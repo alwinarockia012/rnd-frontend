@@ -6,6 +6,7 @@ import {
   FaMapMarkerAlt,
   FaPhone,
   FaChevronDown,
+  FaEnvelope,
 } from 'react-icons/fa';
 import './Footer.css';
 
