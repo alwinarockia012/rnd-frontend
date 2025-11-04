@@ -109,7 +109,7 @@
 
 /* Profile Card */
 .profile-card {
-  background: var(--darkGrey);
+  background: #1a1a1a; /* Darker than var(--darkGrey) */
   border-radius: 16px;
   padding: 1.5rem;
   border: 2px solid var(--orange);
@@ -831,4 +831,168 @@
   background: linear-gradient(135deg, #e05320, #F15A24);
   transform: translateY(-2px);
   box-shadow: 0 6px 8px rgba(241, 90, 36, 0.4);
+}
+
+/* Mobile Responsive Font Sizing */
+@media screen and (max-width: 768px) {
+  .dashboard-header h1 {
+    font-size: 20px;
+  }
+  
+  .user-info {
+    font-size: 14px;
+  }
+  
+  .logout-btn {
+    font-size: 14px;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .profile-info h2 {
+    font-size: 18px;
+  }
+  
+  .member-since {
+    font-size: 12px;
+  }
+  
+  .stat-number {
+    font-size: 20px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
+  
+  .card-header h3 {
+    font-size: 18px;
+  }
+  
+  .event-item h4 {
+    font-size: 16px;
+  }
+  
+  .event-details {
+    font-size: 14px;
+  }
+  
+  .join-event-btn {
+    font-size: 14px;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .ticket-item-container h4 {
+    font-size: 16px;
+  }
+  
+  .booking-id-preview,
+  .event-status {
+    font-size: 12px;
+  }
+  
+  .view-ticket-btn {
+    font-size: 12px;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .no-events-message {
+    font-size: 14px;
+  }
+  
+  .new-booking-notification .notification-text h4 {
+    font-size: 16px;
+  }
+  
+  .new-booking-notification .notification-text p {
+    font-size: 14px;
+  }
+  
+  .new-booking-notification .view-ticket-btn {
+    font-size: 12px;
+    padding: 0.4rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 18px;
+  }
+  
+  .user-info {
+    font-size: 12px;
+  }
+  
+  .logout-btn {
+    font-size: 12px;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .profile-info h2 {
+    font-size: 16px;
+  }
+  
+  .member-since {
+    font-size: 11px;
+  }
+  
+  .stat-number {
+    font-size: 18px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+  
+  .card-header h3 {
+    font-size: 16px;
+  }
+  
+  .event-item h4 {
+    font-size: 14px;
+  }
+  
+  .event-details {
+    font-size: 12px;
+  }
+  
+  .join-event-btn {
+    font-size: 12px;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .ticket-item-container h4 {
+    font-size: 14px;
+  }
+  
+  .booking-id-preview,
+  .event-status {
+    font-size: 11px;
+  }
+  
+  .view-ticket-btn {
+    font-size: 11px;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .no-events-message {
+    font-size: 12px;
+  }
+  
+  .new-booking-notification {
+    max-width: 300px;
+    padding: 0.75rem;
+  }
+  
+  .new-booking-notification .notification-text h4 {
+    font-size: 14px;
+  }
+  
+  .new-booking-notification .notification-text p {
+    font-size: 12px;
+  }
+  
+  .new-booking-notification .view-ticket-btn {
+    font-size: 11px;
+    padding: 0.3rem;
+  }
 }

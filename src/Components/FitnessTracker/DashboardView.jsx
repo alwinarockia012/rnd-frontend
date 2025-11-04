@@ -134,6 +134,16 @@ const DashboardView = ({ user }) => {
               }));
             }
           }
+          
+          // Load water intake data
+          const waterData = await loadWaterIntakeData(user.uid);
+          if (isMounted && waterData) {
+            setStats(prev => ({
+              ...prev,
+              waterIntake: waterData.intake || 0,
+              waterGoal: waterData.goal || 8
+            }));
+          }
         } catch (error) {
           console.error('Error loading dashboard data:', error);
           if (isMounted) {
@@ -176,6 +186,52 @@ const DashboardView = ({ user }) => {
       window.removeEventListener('mealDeleted', handleMealEvent);
     };
   }, [user]);
+
+  // Load water intake data from localStorage or initialize
+  const loadWaterIntakeData = async (userId) => {
+    try {
+      const waterData = localStorage.getItem(`waterIntake_${userId}_${new Date().toISOString().split('T')[0]}`);
+      if (waterData) {
+        return JSON.parse(waterData);
+      }
+      return { intake: 0, goal: 8 };
+    } catch (error) {
+      console.error('Error loading water intake data:', error);
+      return { intake: 0, goal: 8 };
+    }
+  };
+
+  // Save water intake data to localStorage
+  const saveWaterIntakeData = async (userId, waterData) => {
+    try {
+      localStorage.setItem(`waterIntake_${userId}_${new Date().toISOString().split('T')[0]}`, JSON.stringify(waterData));
+      return true;
+    } catch (error) {
+      console.error('Error saving water intake data:', error);
+      return false;
+    }
+  };
+
+  // Add water intake
+  const addWaterIntake = async () => {
+    try {
+      const newIntake = stats.waterIntake + 1;
+      const updatedWaterData = {
+        intake: newIntake,
+        goal: stats.waterGoal
+      };
+      
+      const success = await saveWaterIntakeData(user.uid, updatedWaterData);
+      if (success) {
+        setStats(prev => ({
+          ...prev,
+          waterIntake: newIntake
+        }));
+      }
+    } catch (error) {
+      console.error('Error adding water intake:', error);
+    }
+  };
 
   // Calculate daily calorie needs based on user profile
   const calculateCalorieNeeds = (profile) => {
@@ -249,14 +305,23 @@ const DashboardView = ({ user }) => {
         <div className="stat-card">
           <h3>Calories Consumed</h3>
           <p className="stat-value">{stats.caloriesConsumed}<span>/{stats.caloriesGoal}</span></p>
+          <button className="add-meal-btn" onClick={() => window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'meals' }))}>
+            + Add Meal
+          </button>
         </div>
         <div className="stat-card">
           <h3>Workouts This Week</h3>
           <p className="stat-value">{stats.workoutsThisWeek}<span>/{stats.workoutsGoal}</span></p>
+          <button className="add-workout-btn" onClick={() => window.dispatchEvent(new CustomEvent('navigateToTab', { detail: 'workouts' }))}>
+            + Add Workout
+          </button>
         </div>
         <div className="stat-card">
           <h3>Water Intake</h3>
           <p className="stat-value">{stats.waterIntake}<span>/{stats.waterGoal} glasses</span></p>
+          <button className="add-water-btn" onClick={addWaterIntake}>
+            + Add Water
+          </button>
         </div>
       </div>
       

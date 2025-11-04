@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaHeart, FaComment, FaPlus, FaImage, FaRunning, FaPaperPlane, FaTrash, FaSpinner } from 'react-icons/fa';
+import { FaHeart, FaComment, FaPlus, FaImage, FaRunning, FaPaperPlane, FaTrash, FaSpinner, FaChevronUp, FaChevronDown } from 'react-icons/fa';
 import { auth, db, storage } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, orderBy, limit, onSnapshot, addDoc, updateDoc, doc, increment, serverTimestamp, where, getDocs, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
@@ -31,6 +31,7 @@ const Community = () => {
   const [mentionTriggerIndex, setMentionTriggerIndex] = useState(-1); // Added for mention suggestions
   const [activeMentionIndex, setActiveMentionIndex] = useState(0); // Added for mention suggestions
   const [isSubmitting, setIsSubmitting] = useState(false); // Added for tracking submission state
+  const [showTopRunners, setShowTopRunners] = useState(true); // Added for toggle functionality
 
   // Function to calculate user stats
   const calculateUserStats = async (userId) => {
@@ -749,7 +750,7 @@ const Community = () => {
                         </button>
                         <button 
                           type="submit" 
-                          className={`submit-btn ${isSubmitting ? 'loading' : ''}`}
+                          className="submit-btn"
                           disabled={isSubmitting}
                         >
                           {isSubmitting ? (
@@ -909,7 +910,7 @@ const Community = () => {
 
             {/* Sidebar with Ranked Users */}
             <div className="community-sidebar">
-              {/* Ranked Users List */}
+              {/* Ranked Users List - Mobile Toggle */}
               <motion.div 
                 className="users-section"
                 initial={{ opacity: 0, y: 20 }}
@@ -919,41 +920,50 @@ const Community = () => {
                 <div className="section-header">
                   <h2>Top Runners</h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button 
+                      className="toggle-top-runners-btn"
+                      onClick={() => setShowTopRunners(!showTopRunners)}
+                      aria-label={showTopRunners ? "Hide top runners" : "Show top runners"}
+                    >
+                      {showTopRunners ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
                     <FaRunning className="section-icon" />
                     <span className="real-time-indicator">LIVE</span>
                   </div>
                 </div>
                 
-                <div className="users-list">
-                  {rankedUsers.slice(0, 10).map((user, index) => (
-                    <div 
-                      key={user.id} 
-                      className={`user-item ${currentUser && currentUser.uid === user.id ? 'current-user' : ''}`}
-                    >
-                      <div className="user-rank">{index + 1}</div>
-                      <div className="user-avatar-small">
-                        {user.photoURL ? (
-                          <img src={user.photoURL} alt={user.displayName} />
-                        ) : (
-                          <div className="default-avatar">{user.displayName?.charAt(0) || 'U'}</div>
-                        )}
-                      </div>
-                      <div className="user-info">
-                        <h4>{user.displayName || 'Anonymous User'} {currentUser && currentUser.uid === user.id && '(You)'}</h4>
-                        <div className="user-stats">
-                          <span className="distance-stat">{user.totalDistance || 0} km</span>
-                          <span className="runs-stat">{user.totalRuns || 0} runs</span>
+                {showTopRunners && (
+                  <div className="users-list">
+                    {rankedUsers.slice(0, 10).map((user, index) => (
+                      <div 
+                        key={user.id} 
+                        className={`user-item ${currentUser && currentUser.uid === user.id ? 'current-user' : ''}`}
+                      >
+                        <div className="user-rank">{index + 1}</div>
+                        <div className="user-avatar-small">
+                          {user.photoURL ? (
+                            <img src={user.photoURL} alt={user.displayName} />
+                          ) : (
+                            <div className="default-avatar">{user.displayName?.charAt(0) || 'U'}</div>
+                          )}
                         </div>
-                        <div className="distance-per-run">
-                          {user.totalRuns > 0 ? `${(user.totalDistance / user.totalRuns).toFixed(1)} km/run` : '0 km/run'}
+                        <div className="user-info">
+                          <h4>{user.displayName || 'Anonymous User'} {currentUser && currentUser.uid === user.id && '(You)'}</h4>
+                          <div className="user-stats">
+                            <span className="distance-stat">{user.totalDistance || 0} km</span>
+                            <span className="runs-stat">{user.totalRuns || 0} runs</span>
+                          </div>
+                          <div className="distance-per-run">
+                            {user.totalRuns > 0 ? `${(user.totalDistance / user.totalRuns).toFixed(1)} km/run` : '0 km/run'}
+                          </div>
+                        </div>
+                        <div className="real-time-badge">
+                          <div className="pulse"></div>
                         </div>
                       </div>
-                      <div className="real-time-badge">
-                        <div className="pulse"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>

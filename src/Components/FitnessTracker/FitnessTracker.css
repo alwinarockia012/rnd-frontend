@@ -243,6 +243,96 @@
   box-shadow: 0 0 5px rgba(241, 90, 36, 0.5);
 }
 
+/* Added styles for program summary */
+.program-summary {
+  background: #222222;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.summary-item .label {
+  font-weight: bold;
+  color: #cccccc;
+}
+
+.summary-item .value {
+  color: #ffffff;
+}
+
+.summary-item .program-name {
+  color: #F15A24;
+}
+
+/* Added styles for nutrition calculations */
+.nutrition-calculations {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #333333;
+}
+
+.nutrition-calculations h3 {
+  color: #ffffff;
+  margin-top: 0;
+}
+
+.calculation-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.calculation-card {
+  background: #222222;
+  border-radius: 4px;
+  padding: 15px;
+  text-align: center;
+}
+
+.calculation-card h4 {
+  margin: 0 0 10px 0;
+  color: #cccccc;
+  font-size: 16px;
+}
+
+.calculation-card .value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #F15A24;
+  margin: 0 0 5px 0;
+}
+
+.calculation-card .description {
+  font-size: 12px;
+  color: #aaaaaa;
+  margin: 0;
+}
+
+/* Added styles for quantity input group */
+.quantity-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.quantity-input {
+  flex: 2;
+}
+
+.unit-select {
+  flex: 1;
+}
+
 .loading-text {
   font-size: 14px;
   color: #F15A24;
@@ -253,7 +343,11 @@
 /* Buttons */
 .log-meal-button,
 .log-workout-button,
-.save-profile-button {
+.save-profile-button,
+.get-nutrition-button,
+.next-button,
+.back-button,
+.save-button {
   background-color: #F15A24;
   color: white;
   border: none;
@@ -267,15 +361,31 @@
 
 .log-meal-button:hover,
 .log-workout-button:hover,
-.save-profile-button:hover {
+.save-profile-button:hover,
+.get-nutrition-button:hover,
+.next-button:hover,
+.back-button:hover,
+.save-button:hover {
   background-color: #d64a1f;
 }
 
 .log-meal-button:disabled,
 .log-workout-button:disabled,
-.save-profile-button:disabled {
+.save-profile-button:disabled,
+.get-nutrition-button:disabled,
+.next-button:disabled,
+.save-button:disabled {
   background-color: #666666;
   cursor: not-allowed;
+}
+
+.back-button {
+  background-color: #333333;
+  margin-right: 10px;
+}
+
+.back-button:hover {
+  background-color: #444444;
 }
 
 .delete-meal-button,
@@ -293,6 +403,15 @@
 .delete-meal-button:hover,
 .delete-workout-button:hover {
   background-color: #c82333;
+}
+
+/* Form navigation */
+.form-navigation {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #333333;
 }
 
 /* Messages */
@@ -727,4 +846,231 @@
   .notifications-panel {
     margin: 20px 0;
   }
+}
+
+/* Mobile Responsive Font Sizing */
+@media screen and (max-width: 768px) {
+  .fitness-header h1 {
+    font-size: 24px;
+  }
+  
+  .fitness-header p {
+    font-size: 16px;
+  }
+  
+  .tab-button {
+    font-size: 14px;
+    padding: 12px 15px;
+  }
+  
+  .stat-card h3 {
+    font-size: 16px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .stat-value span {
+    font-size: 14px;
+  }
+  
+  .chart-container h3 {
+    font-size: 16px;
+  }
+  
+  .tip-card h4 {
+    font-size: 16px;
+  }
+  
+  .tip-card p {
+    font-size: 14px;
+  }
+  
+  .add-meal-btn,
+  .add-workout-btn,
+  .add-water-btn {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .profile-form h2,
+  .meal-tracker h2,
+  .workout-tracker h2 {
+    font-size: 20px;
+  }
+  
+  .form-step h3 {
+    font-size: 18px;
+  }
+  
+  .meal-item h4,
+  .workout-item h4 {
+    font-size: 16px;
+  }
+  
+  .meal-item p,
+  .workout-item p {
+    font-size: 14px;
+  }
+  
+  .ai-assistant h3 {
+    font-size: 18px;
+  }
+  
+  .message {
+    font-size: 14px;
+  }
+  
+  .chat-input {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .fitness-header h1 {
+    font-size: 20px;
+  }
+  
+  .fitness-header p {
+    font-size: 14px;
+  }
+  
+  .tab-button {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  
+  .stat-card h3 {
+    font-size: 14px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .stat-value span {
+    font-size: 12px;
+  }
+  
+  .chart-container h3 {
+    font-size: 14px;
+  }
+  
+  .tip-card h4 {
+    font-size: 14px;
+  }
+  
+  .tip-card p {
+    font-size: 12px;
+  }
+  
+  .add-meal-btn,
+  .add-workout-btn,
+  .add-water-btn {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+  
+  .profile-form h2,
+  .meal-tracker h2,
+  .workout-tracker h2 {
+    font-size: 18px;
+  }
+  
+  .form-step h3 {
+    font-size: 16px;
+  }
+  
+  .meal-item h4,
+  .workout-item h4 {
+    font-size: 14px;
+  }
+  
+  .meal-item p,
+  .workout-item p {
+    font-size: 12px;
+  }
+  
+  .ai-assistant h3 {
+    font-size: 16px;
+  }
+  
+  .message {
+    font-size: 12px;
+  }
+  
+  .chat-input {
+    font-size: 12px;
+  }
+}
+
+/* Add Meal Button Styles */
+.add-meal-btn {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #F15A24; /* Orange color */
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.add-meal-btn:hover {
+  background-color: #d14a1f; /* Darker orange on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.add-meal-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Add Workout Button Styles */
+.add-workout-btn {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #F15A24; /* Orange color */
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.add-workout-btn:hover {
+  background-color: #d14a1f; /* Darker orange on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Add Water Button Styles */
+.add-water-btn {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #F15A24; /* Orange color */
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.add-water-btn:hover {
+  background-color: #d14a1f; /* Darker orange on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.add-water-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }

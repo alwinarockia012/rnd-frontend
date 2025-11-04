@@ -1,20 +1,18 @@
 .notification {
   position: fixed;
-  top: 20px;
+  top: 15px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10000;
-  min-width: 300px;
-  max-width: 500px;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(10px);
+  min-width: 250px;
+  max-width: 90vw;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+  animation: slideIn 0.3s ease-out;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  box-sizing: border-box;
-  color: white !important;
+  font-size: 14px;
 }
 
 .notification.closing {
@@ -23,55 +21,39 @@
 
 .notification-content {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  box-sizing: border-box;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .notification-icon {
-  font-size: 1.2em;
+  font-size: 1em;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  line-height: 1;
-  margin-top: 0;
-  padding: 0;
-  color: white !important;
+  margin-top: 2px;
 }
 
 .notification-message {
   flex: 1;
-  font-size: 18px;
-  line-height: 1.4;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0;
+  font-size: 14px;
+  line-height: 1.3;
   margin: 0;
-  color: white !important;
+  padding: 0;
 }
 
 .notification-close {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 16px;
   cursor: pointer;
   padding: 0;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   transition: background-color 0.2s;
   flex-shrink: 0;
-  margin: 0;
-  align-self: flex-start;
-  color: white !important;
+  margin-top: -2px;
 }
 
 .notification-close:hover {
@@ -96,42 +78,43 @@
   border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
+.notification-warning {
+  background: rgba(241, 90, 36, 0.9);
+  color: white;
+  border: 1px solid rgba(241, 90, 36, 0.5);
+}
+
 /* Base warning style */
 .notification-warning {
-  background: rgba(241, 90, 36, 0.95); /* Using the app's primary orange color */
+  background: rgba(241, 90, 36, 0.95);
   color: white !important;
   border: 1px solid rgba(241, 90, 36, 0.7);
-  box-shadow: 0 8px 24px rgba(241, 90, 36, 0.3);
-  animation: pulse 2s infinite;
+  box-shadow: 0 4px 12px rgba(241, 90, 36, 0.3);
 }
 
 /* Specific style for "already registered" warnings */
 .notification-warning.registered {
-  background: rgba(241, 90, 36, 0.95); /* Orange background */
+  background: rgba(241, 90, 36, 0.95);
   color: white !important;
   border: 1px solid rgba(241, 90, 36, 0.7);
-  box-shadow: 0 8px 24px rgba(241, 90, 36, 0.3);
-  animation: pulse 2s infinite;
+  box-shadow: 0 4px 12px rgba(241, 90, 36, 0.3);
 }
 
 /* Specific style for "not registered" warnings */
 .notification-warning.not-registered {
-  background: rgba(255, 165, 0, 0.95); /* Slightly different orange for distinction */
+  background: rgba(255, 165, 0, 0.95);
   color: white !important;
   border: 1px solid rgba(255, 165, 0, 0.7);
-  box-shadow: 0 8px 24px rgba(255, 165, 0, 0.3);
-  animation: pulse 2s infinite;
+  box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3);
 }
 
 /* New style specifically for OTP success notifications */
 .notification-otp-success {
-  background: rgba(241, 90, 36, 0.95); /* Using the app's primary orange color */
+  background: rgba(241, 90, 36, 0.95);
   color: white !important;
   border: 1px solid rgba(241, 90, 36, 0.7);
-  box-shadow: 0 8px 24px rgba(241, 90, 36, 0.3);
-  animation: otpPulse 1.5s ease-in-out infinite alternate;
-  font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(241, 90, 36, 0.3);
+  font-weight: 500;
 }
 
 /* Add distinct styling for the different warning types */
@@ -143,7 +126,7 @@
 
 .notification-warning.registered .notification-icon,
 .notification-warning.not-registered .notification-icon {
-  font-size: 1.3em;
+  font-size: 1em;
   color: white !important;
 }
 
@@ -155,29 +138,6 @@
   color: white !important;
 }
 
-@keyframes otpPulse {
-  0% {
-    box-shadow: 0 8px 24px rgba(241, 90, 36, 0.3);
-    transform: translateX(-50%) scale(1);
-  }
-  100% {
-    box-shadow: 0 12px 30px rgba(241, 90, 36, 0.5);
-    transform: translateX(-50%) scale(1.02);
-  }
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 8px 24px rgba(241, 90, 36, 0.3);
-  }
-  50% {
-    box-shadow: 0 8px 32px rgba(241, 90, 36, 0.5);
-  }
-  100% {
-    box-shadow: 0 8px 24px rgba(241, 90, 36, 0.3);
-  }
-}
-
 @keyframes slideIn {
   from {
     transform: translateX(-50%) translateY(-100%);
@@ -203,137 +163,54 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .notification {
-    min-width: 280px;
-    max-width: calc(100vw - 40px);
-    padding: 16px;
+    min-width: 200px;
+    max-width: calc(100vw - 30px);
+    padding: 10px 12px;
+    top: 10px;
   }
   
   .notification-content {
-    gap: 10px;
+    gap: 6px;
   }
   
   .notification-message {
-    font-size: 16px;
+    font-size: 13px;
   }
   
   .notification-icon {
-    font-size: 1.1em;
+    font-size: 0.9em;
   }
   
   .notification-close {
-    font-size: 18px;
-    width: 22px;
-    height: 22px;
-  }
-}
-.notification {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10000;
-  min-width: 300px;
-  max-width: 500px;
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(10px);
-  animation: slideIn 0.3s ease-out;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-}
-
-.notification.closing {
-  animation: slideOut 0.3s ease-out forwards;
-}
-
-.notification-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.notification-icon {
-  font-size: 1.2em;
-  flex-shrink: 0;
-}
-
-.notification-message {
-  flex: 1;
-  font-size: 16px;
-  line-height: 1.4;
-}
-
-.notification-close {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.notification-close:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.notification-info {
-  background: rgba(59, 130, 246, 0.9);
-  color: white;
-  border: 1px solid rgba(59, 130, 246, 0.5);
-}
-
-.notification-success {
-  background: rgba(16, 185, 129, 0.9);
-  color: white;
-  border: 1px solid rgba(16, 185, 129, 0.5);
-}
-
-.notification-error {
-  background: rgba(239, 68, 68, 0.9);
-  color: white;
-  border: 1px solid rgba(239, 68, 68, 0.5);
-}
-
-.notification-warning {
-  background: rgba(241, 90, 36, 0.9); /* Using the app's primary orange color */
-  color: white;
-  border: 1px solid rgba(241, 90, 36, 0.5);
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(-50%) translateY(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
+    font-size: 14px;
+    width: 18px;
+    height: 18px;
   }
 }
 
-@keyframes slideOut {
-  from {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-50%) translateY(-100%);
-    opacity: 0;
-  }
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .notification {
-    min-width: 280px;
-    max-width: calc(100vw - 40px);
-    left: 50%;
-    right: auto;
+    min-width: 180px;
+    max-width: calc(100vw - 20px);
+    padding: 8px 10px;
+    top: 8px;
+  }
+  
+  .notification-content {
+    gap: 5px;
+  }
+  
+  .notification-message {
+    font-size: 12px;
+  }
+  
+  .notification-icon {
+    font-size: 0.8em;
+  }
+  
+  .notification-close {
+    font-size: 13px;
+    width: 16px;
+    height: 16px;
   }
 }

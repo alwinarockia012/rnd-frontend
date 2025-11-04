@@ -16,6 +16,10 @@ const MealTracker = ({ user }) => {
     mealType: 'breakfast',
     date: new Date().toISOString().split('T')[0]
   });
+  
+  // Added state for food quantity with unit options
+  const [foodQuantity, setFoodQuantity] = useState('');
+  const [foodUnit, setFoodUnit] = useState('grams'); // Default to grams
 
   // Load user meals when component mounts
   useEffect(() => {
@@ -37,8 +41,8 @@ const MealTracker = ({ user }) => {
     loadMeals();
   }, [user]);
 
-  const fetchNutritionData = async (foodName) => {
-    if (!foodName.trim()) return;
+  const fetchNutritionData = async (foodName, quantity, unit) => {
+    if (!foodName.trim() || !quantity) return;
     
     setFetchingNutrition(true);
     setMessage('');
@@ -91,16 +95,64 @@ const MealTracker = ({ user }) => {
       try {
         const nutritionData = JSON.parse(cleanedNutritionInfo);
         
-        // Update the form fields with the fetched nutrition data
+        // More accurate conversion factors for different units (based on 100g reference)
+        // Updated to be more realistic for common foods
+        const conversionFactors = {
+          grams: quantity / 100,
+          pieces: quantity * 0.8, // Increased from 0.1 to 0.8 (80g average for items like dosa, apple, etc.)
+          kg: quantity * 10,
+          ounces: quantity * 0.2835, // 1 ounce ≈ 28.35g
+          lbs: quantity * 4.536, // 1 lb ≈ 453.6g
+          cups: quantity * 0.24, // Assuming average cup is ~24g, can be adjusted
+          tbsp: quantity * 0.15, // 1 tbsp ≈ 15g
+          tsp: quantity * 0.05 // 1 tsp ≈ 5g
+        };
+        
+        // Special handling for specific foods with known average weights
+        const specialFoodFactors = {
+          'dosa': 0.8, // 80g average
+          'apple': 0.15, // 150g average
+          'banana': 0.12, // 120g average
+          'orange': 0.13, // 130g average
+          'roti': 0.06, // 60g average
+          'chapati': 0.06, // 60g average
+          'idli': 0.07, // 70g average
+          'bread slice': 0.03, // 30g average
+          'egg': 0.05, // 50g average
+          'chicken breast': 1.5, // 150g average
+          'rice bowl': 1.2 // 120g average
+        };
+        
+        // Check if we have a special factor for this food
+        let multiplier;
+        const foodNameLower = foodName.toLowerCase();
+        let foundSpecial = false;
+        
+        for (const [specialFood, factor] of Object.entries(specialFoodFactors)) {
+          if (foodNameLower.includes(specialFood)) {
+            multiplier = quantity * factor;
+            foundSpecial = true;
+            break;
+          }
+        }
+        
+        // If no special factor found, use general conversion
+        if (!foundSpecial) {
+          multiplier = conversionFactors[unit] || conversionFactors.grams;
+        }
+        
+        // Update the form fields with the calculated nutrition data
         setNewMeal(prev => ({
           ...prev,
-          calories: nutritionData.calories || '',
-          protein: nutritionData.protein_g || '',
-          carbs: nutritionData.carbs_g || '',
-          fat: nutritionData.fat_g || ''
+          calories: Math.round((nutritionData.calories || 0) * multiplier),
+          protein: Math.round((nutritionData.protein_g || 0) * multiplier * 10) / 10,
+          carbs: Math.round((nutritionData.carbs_g || 0) * multiplier * 10) / 10,
+          fat: Math.round((nutritionData.fat_g || 0) * multiplier * 10) / 10
         }));
         
-        setMessage(`Nutrition facts for ${nutritionData.food} fetched successfully!`);
+        // Show more informative message
+        const unitDisplay = foundSpecial ? 'piece (avg weight)' : unit;
+        setMessage(`Nutrition facts for ${nutritionData.food} (${quantity} ${unitDisplay}) fetched successfully!`);
       } catch (parseError) {
         console.error('Error parsing nutrition data:', parseError);
         console.error('Raw nutrition info:', nutritionInfo);
@@ -114,23 +166,26 @@ const MealTracker = ({ user }) => {
     }
   };
 
+  const handleGetNutrition = () => {
+    if (!newMeal.name.trim()) {
+      setMessage('Please enter a food name');
+      return;
+    }
+    
+    if (!foodQuantity || isNaN(foodQuantity) || parseFloat(foodQuantity) <= 0) {
+      setMessage('Please enter a valid quantity');
+      return;
+    }
+    
+    fetchNutritionData(newMeal.name, parseFloat(foodQuantity), foodUnit);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewMeal(prev => ({
       ...prev,
       [name]: value
     }));
-    
-    // Fetch nutrition data when meal name is updated
-    if (name === 'name') {
-      // Debounce the API call to avoid too many requests
-      clearTimeout(window.nutritionFetchTimeout);
-      window.nutritionFetchTimeout = setTimeout(() => {
-        if (value.trim()) {
-          fetchNutritionData(value);
-        }
-      }, 500);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -164,6 +219,9 @@ const MealTracker = ({ user }) => {
             mealType: 'breakfast',
             date: new Date().toISOString().split('T')[0]
           });
+          // Reset quantity and unit
+          setFoodQuantity('');
+          setFoodUnit('grams');
           
           // Dispatch a custom event to notify the dashboard to refresh
           window.dispatchEvent(new CustomEvent('mealLogged', { detail: { userId: user.uid } }));
@@ -286,7 +344,6 @@ const MealTracker = ({ user }) => {
                   placeholder="e.g., Oatmeal with Berries"
                   required
                 />
-                {fetchingNutrition && <span className="loading-text">Fetching nutrition data...</span>}
               </div>
               
               <div className="form-group">
@@ -301,6 +358,50 @@ const MealTracker = ({ user }) => {
                   <option value="dinner">Dinner</option>
                   <option value="snack">Snack</option>
                 </select>
+              </div>
+            </div>
+            
+            {/* Updated quantity input section with unit dropdown */}
+            <div className="form-row">
+              <div className="form-group">
+                <label>Quantity</label>
+                <div className="quantity-input-group">
+                  <input
+                    type="number"
+                    value={foodQuantity}
+                    onChange={(e) => setFoodQuantity(e.target.value)}
+                    placeholder="Enter amount"
+                    min="0"
+                    step="0.1"
+                    className="quantity-input"
+                  />
+                  <select
+                    value={foodUnit}
+                    onChange={(e) => setFoodUnit(e.target.value)}
+                    className="unit-select"
+                  >
+                    <option value="grams">Grams</option>
+                    <option value="pieces">Pieces</option>
+                    <option value="kg">Kilograms</option>
+                    <option value="ounces">Ounces</option>
+                    <option value="lbs">Pounds</option>
+                    <option value="cups">Cups</option>
+                    <option value="tbsp">Tablespoons</option>
+                    <option value="tsp">Teaspoons</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>&nbsp;</label>
+                <button 
+                  type="button" 
+                  className="get-nutrition-button"
+                  onClick={handleGetNutrition}
+                  disabled={fetchingNutrition}
+                >
+                  {fetchingNutrition ? 'Fetching...' : 'Get Nutrition'}
+                </button>
               </div>
             </div>
             
@@ -365,7 +466,7 @@ const MealTracker = ({ user }) => {
             <button 
               type="submit" 
               className="log-meal-button"
-              disabled={loading || fetchingNutrition}
+              disabled={loading}
             >
               {loading ? 'Logging...' : 'Log Meal'}
             </button>
