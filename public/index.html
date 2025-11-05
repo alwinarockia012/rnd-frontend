@@ -4,13 +4,11 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="FitClub - Your Fitness Companion"
-      content="Fitness Club Landing Page"
-    />
+    <meta name="theme-color" content="#F15A24" />
+    <meta name="description" content="Tech Vaseegrah - Run and Develop Fitness App" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo.png" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,12 +21,26 @@
         font-family: "Inter", sans-serif;
       }
     </style>
-    <title>R&D - Run and Develop</title>
+    <title>Tech Vaseegrah - Run and Develop</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     
-
+    <script>
+      // Check that service workers are supported
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // Use absolute path for service worker
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

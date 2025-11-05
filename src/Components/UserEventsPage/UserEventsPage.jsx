@@ -1005,7 +1005,7 @@ function UserEventsPage() {
                       </div>
                     </div>
                   </div>
-                ))
+                 ))
               ) : (
                 <div className="no-events">
                   <p>No past Weekly Community Run events available.</p>
