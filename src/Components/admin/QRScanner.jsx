@@ -79,6 +79,26 @@ const QRScanner = () => {
     return date > validPeriodStart;
   }, []);
 
+  // Function to check if an event date has passed
+  const isEventDatePassed = (eventDate) => {
+    if (!eventDate) return false;
+    
+    let eventTime;
+    if (eventDate.toDate && typeof eventDate.toDate === 'function') {
+      eventTime = eventDate.toDate();
+    } else if (eventDate instanceof Date) {
+      eventTime = eventDate;
+    } else {
+      eventTime = new Date(eventDate);
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    eventTime.setHours(0, 0, 0, 0);
+    
+    return eventTime < today;
+  };
+
   const handleTicketDataChange = (event) => {
     // Add safety check for event and target
     if (event && event.target) {
@@ -301,9 +321,40 @@ const QRScanner = () => {
     setError(null);
     
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
+      // Check if we're in a secure context (HTTPS or localhost)
+      if (!window.isSecureContext) {
+        throw new Error('Camera access requires a secure context (HTTPS or localhost)');
+      }
+      
+      // Check if mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API is not supported in this browser');
+      }
+      
+      // Detect if we're on a mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      // Define constraints based on device type
+      let constraints = {
+        video: {
+          facingMode: 'environment', // Prefer back camera
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+      
+      // For mobile devices, use more flexible constraints
+      if (isMobile) {
+        constraints = {
+          video: {
+            facingMode: 'environment',
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720, max: 1080 }
+          }
+        };
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       streamRef.current = stream;
       if (videoRef.current) {
@@ -311,16 +362,36 @@ const QRScanner = () => {
       }
       
       // Start scanning for QR codes after a short delay to ensure video is ready
+      // Longer delay for mobile devices
       setTimeout(() => {
         scanQRCode();
-      }, 500);
+      }, isMobile ? 1500 : 1000);
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      // Try again with default camera if environment camera is not available
+      console.error('Error accessing camera with environment mode:', err);
+      
+      // Try again with user-facing camera as fallback
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: true
-        });
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        let constraints = {
+          video: {
+            facingMode: 'user', // Front camera as fallback
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+        
+        // For mobile devices, use more flexible constraints
+        if (isMobile) {
+          constraints = {
+            video: {
+              facingMode: 'user',
+              width: { min: 640, ideal: 1280, max: 1920 },
+              height: { min: 480, ideal: 720, max: 1080 }
+            }
+          };
+        }
+        
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         
         streamRef.current = stream;
         if (videoRef.current) {
@@ -330,11 +401,46 @@ const QRScanner = () => {
         // Start scanning for QR codes after a short delay to ensure video is ready
         setTimeout(() => {
           scanQRCode();
-        }, 500);
+        }, isMobile ? 1500 : 1000);
       } catch (fallbackError) {
         console.error('Error accessing camera (fallback):', fallbackError);
-        setError('Could not access camera. Please ensure you have given permission and try again.');
-        setScanning(false);
+        
+        // Try one more time with minimal constraints
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: true
+          });
+          
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+          
+          // Start scanning for QR codes after a short delay to ensure video is ready
+          setTimeout(() => {
+            scanQRCode();
+          }, 1000);
+        } catch (minimalError) {
+          console.error('Error accessing camera (minimal):', minimalError);
+          
+          // Provide specific error messages based on the error type
+          let errorMessage = 'Could not access camera. ';
+          
+          if (minimalError.name === 'NotAllowedError') {
+            errorMessage += 'Please ensure you have given permission to access the camera. On mobile devices, you may need to enable camera permissions in your browser settings.';
+          } else if (minimalError.name === 'NotFoundError') {
+            errorMessage += 'No camera found on this device.';
+          } else if (minimalError.name === 'NotReadableError') {
+            errorMessage += 'Camera is being used by another application.';
+          } else if (minimalError.name === 'OverconstrainedError') {
+            errorMessage += 'Camera constraints cannot be satisfied.';
+          } else {
+            errorMessage += 'Please check your browser settings and try again.';
+          }
+          
+          setError(errorMessage);
+          setScanning(false);
+        }
       }
     }
   };
@@ -360,10 +466,19 @@ const QRScanner = () => {
 
   // Scan QR codes from camera feed
   const scanQRCode = () => {
-    if (!scanning || !videoRef.current || videoRef.current.readyState !== 4) {
+    if (!scanning || !videoRef.current) {
       if (scanning) {
         requestAnimationFrame(scanQRCode);
       }
+      return;
+    }
+
+    const video = videoRef.current;
+    
+    // Check if video is ready
+    if (video.readyState !== 4) {
+      // Video not ready yet, try again
+      requestAnimationFrame(scanQRCode);
       return;
     }
 
@@ -385,9 +500,13 @@ const QRScanner = () => {
       return;
     }
 
-    const video = videoRef.current;
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    // Set canvas dimensions based on video dimensions
+    // On mobile, we might need to handle different aspect ratios
+    const videoWidth = video.videoWidth || video.offsetWidth || 640;
+    const videoHeight = video.videoHeight || video.offsetHeight || 480;
+    
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
     
     try {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -419,8 +538,13 @@ const QRScanner = () => {
       }
     } catch (qrError) {
       console.error('Error scanning QR code:', qrError);
-      setError('Error scanning QR code from camera.');
-      stopCamera();
+      // On mobile, sometimes we get intermittent errors, so we'll continue scanning
+      if (scanning) {
+        requestAnimationFrame(scanQRCode);
+      } else {
+        setError('Error scanning QR code from camera.');
+        stopCamera();
+      }
     }
   };
 
@@ -759,16 +883,65 @@ const QRScanner = () => {
           }
         } else {
           // User has bookings with original format
-          const bookingData = querySnapshot2.docs[0].data();
+          // Filter for upcoming events only
+          const upcomingBookings = querySnapshot2.docs.filter(doc => {
+            const bookingData = doc.data();
+            return !isEventDatePassed(bookingData.eventDate);
+          });
+          
+          if (upcomingBookings.length > 0) {
+            // User has upcoming bookings
+            const bookingData = upcomingBookings[0].data();
+            setUserBookingStatus({
+              found: true,
+              isBooked: true,
+              message: 'User has an active booking for an upcoming event',
+              bookingData: {
+                id: upcomingBookings[0].id,
+                eventName: bookingData.eventName || 'Unknown Event',
+                userName: bookingData.userName || bookingData.name || 'Unknown',
+                phone: bookingData.phoneNumber || phoneNumberSearch,
+                email: bookingData.userEmail || bookingData.email || 'N/A',
+                bookingDate: bookingData.bookingDate?.toDate ? 
+                  bookingData.bookingDate.toDate() : 
+                  (bookingData.bookingDate || new Date()),
+                status: bookingData.status || 'confirmed'
+              }
+            });
+          } else {
+            // User has bookings but none are for upcoming events
+            setUserBookingStatus({
+              found: true,
+              isBooked: false,
+              message: 'User has past bookings but no upcoming events',
+              userData: {
+                name: 'Unknown',
+                phone: phoneNumberSearch,
+                email: 'N/A'
+              }
+            });
+          }
+        }
+      } else {
+        // User has bookings with normalized format
+        // Filter for upcoming events only
+        const upcomingBookings = querySnapshot.docs.filter(doc => {
+          const bookingData = doc.data();
+          return !isEventDatePassed(bookingData.eventDate);
+        });
+        
+        if (upcomingBookings.length > 0) {
+          // User has upcoming bookings
+          const bookingData = upcomingBookings[0].data();
           setUserBookingStatus({
             found: true,
             isBooked: true,
-            message: 'User has an active booking',
+            message: 'User has an active booking for an upcoming event',
             bookingData: {
-              id: querySnapshot2.docs[0].id,
+              id: upcomingBookings[0].id,
               eventName: bookingData.eventName || 'Unknown Event',
               userName: bookingData.userName || bookingData.name || 'Unknown',
-              phone: bookingData.phoneNumber || phoneNumberSearch,
+              phone: bookingData.phoneNumber || normalizedPhone,
               email: bookingData.userEmail || bookingData.email || 'N/A',
               bookingDate: bookingData.bookingDate?.toDate ? 
                 bookingData.bookingDate.toDate() : 
@@ -776,26 +949,19 @@ const QRScanner = () => {
               status: bookingData.status || 'confirmed'
             }
           });
+        } else {
+          // User has bookings but none are for upcoming events
+          setUserBookingStatus({
+            found: true,
+            isBooked: false,
+            message: 'User has past bookings but no upcoming events',
+            userData: {
+              name: 'Unknown',
+              phone: normalizedPhone,
+              email: 'N/A'
+            }
+          });
         }
-      } else {
-        // User has bookings with normalized format
-        const bookingData = querySnapshot.docs[0].data();
-        setUserBookingStatus({
-          found: true,
-          isBooked: true,
-          message: 'User has an active booking',
-          bookingData: {
-            id: querySnapshot.docs[0].id,
-            eventName: bookingData.eventName || 'Unknown Event',
-            userName: bookingData.userName || bookingData.name || 'Unknown',
-            phone: bookingData.phoneNumber || normalizedPhone,
-            email: bookingData.userEmail || bookingData.email || 'N/A',
-            bookingDate: bookingData.bookingDate?.toDate ? 
-              bookingData.bookingDate.toDate() : 
-              (bookingData.bookingDate || new Date()),
-            status: bookingData.status || 'confirmed'
-          }
-        });
       }
     } catch (err) {
       console.error('Error searching user by phone number:', err);
@@ -912,20 +1078,38 @@ const QRScanner = () => {
                         <span className="detail-label">Booking ID:</span>
                         <span className="detail-value">{userBookingStatus.bookingData.id}</span>
                       </div>
+                      <div className="detail-row">
+                        <span className="detail-label">Event Status:</span>
+                        <span className="detail-value status confirmed">
+                          Upcoming Event
+                        </span>
+                      </div>
                     </>
                   ) : (
                     <>
                       <div className="detail-row">
                         <span className="detail-label">Name:</span>
-                        <span className="detail-value">{userBookingStatus.userData.name}</span>
+                        <span className="detail-value">
+                          {userBookingStatus.userData?.name || 'Unknown'}
+                        </span>
                       </div>
                       <div className="detail-row">
                         <span className="detail-label">Phone:</span>
-                        <span className="detail-value">{userBookingStatus.userData.phone}</span>
+                        <span className="detail-value">
+                          {userBookingStatus.userData?.phone || phoneNumberSearch}
+                        </span>
                       </div>
                       <div className="detail-row">
                         <span className="detail-label">Email:</span>
-                        <span className="detail-value">{userBookingStatus.userData.email}</span>
+                        <span className="detail-value">
+                          {userBookingStatus.userData?.email || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="detail-row">
+                        <span className="detail-label">Event Status:</span>
+                        <span className="detail-value status used">
+                          No Upcoming Events
+                        </span>
                       </div>
                     </>
                   )}

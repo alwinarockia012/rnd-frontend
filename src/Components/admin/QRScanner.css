@@ -97,11 +97,21 @@
 /* --- Camera Scanner --- */
 .scanner-video {
     width: 100%;
+    max-width: 100%;
     border-radius: 8px;
     margin-bottom: 20px;
     border: 1px solid #333;
     background: #000;
     min-height: 250px;
+    object-fit: cover; /* Ensure video fills container properly */
+    display: block;
+}
+
+.scanner-view {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
 }
 
 /* --- File Upload --- */
@@ -213,6 +223,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap; /* Prevent text wrapping */
 }
 
 .admin-btn.primary {
@@ -347,5 +358,49 @@
 
     .admin-btn {
         width: 100%;
+    }
+    
+    .manual-actions {
+        flex-direction: column;
+    }
+    
+    .scanner-video {
+        min-height: 200px;
+    }
+    
+    .scanner-view {
+        min-height: 220px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-card {
+        padding: 15px;
+    }
+    
+    .admin-header h1 {
+        font-size: 24px;
+    }
+    
+    .tab-btn {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+    
+    .scanner-video {
+        min-height: 180px;
+    }
+    
+    .scanner-view {
+        min-height: 200px;
+    }
+    
+    .file-upload-label {
+        padding: 1rem;
+        min-height: 200px;
+    }
+    
+    .upload-icon {
+        font-size: 2rem;
     }
 }

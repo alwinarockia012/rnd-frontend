@@ -88,6 +88,7 @@ const NewRegistrations = () => {
       const userDocRef = doc(db, 'users', userId);
       const userDocSnap = await getDoc(userDocRef);
       const userData = userDocSnap.exists() ? userDocSnap.data() : null;
+      console.log('User data:', userData);
       
       // Fetch user statistics
       const statsDocRef = doc(db, 'userStatistics', userId);
@@ -96,38 +97,204 @@ const NewRegistrations = () => {
       
       // Fetch user bookings with proper error handling
       try {
+        console.log('Fetching bookings for user ID:', userId);
+        
+        // First try to fetch from bookings collection
         const bookingsQuery = query(
           collection(db, 'bookings'),
           where('userId', '==', userId),
           orderBy('bookingDate', 'desc')
         );
         const bookingsSnapshot = await getDocs(bookingsQuery);
-        const bookingsData = bookingsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          // Process dates properly
-          let bookingDate = data.bookingDate;
-          if (data.bookingDate && typeof data.bookingDate.toDate === 'function') {
-            bookingDate = data.bookingDate.toDate();
-          } else if (data.bookingDate && data.bookingDate.seconds) {
-            bookingDate = new Date(data.bookingDate.seconds * 1000);
+        console.log('Found', bookingsSnapshot.size, 'bookings in bookings collection for user', userId);
+        
+        if (bookingsSnapshot.size > 0) {
+          const bookingsData = bookingsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            console.log('Booking data:', doc.id, data);
+            
+            // Process dates properly
+            let bookingDate = data.bookingDate;
+            if (data.bookingDate && typeof data.bookingDate.toDate === 'function') {
+              bookingDate = data.bookingDate.toDate();
+            } else if (data.bookingDate && data.bookingDate.seconds) {
+              bookingDate = new Date(data.bookingDate.seconds * 1000);
+            }
+            
+            let eventDate = data.eventDate;
+            if (data.eventDate && typeof data.eventDate.toDate === 'function') {
+              eventDate = data.eventDate.toDate();
+            } else if (data.eventDate && data.eventDate.seconds) {
+              eventDate = new Date(data.eventDate.seconds * 1000);
+            }
+            
+            // Ensure amount is a number
+            const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
+            
+            return {
+              id: doc.id,
+              ...data,
+              bookingDate: bookingDate,
+              eventDate: eventDate,
+              amount: amount || 0,
+              isFreeTrial: data.isFreeTrial || data.paymentMethod === 'free_trial' || amount === 0
+            };
+          });
+          console.log('Processed bookings data:', bookingsData);
+          setUserBookings(bookingsData);
+          return; // Exit if we found bookings
+        }
+        
+        // If no bookings found in bookings collection, try contacts collection
+        console.log('No bookings found in bookings collection, checking contacts collection');
+        const contactsQuery = query(
+          collection(db, 'contacts'),
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc')
+        );
+        const contactsSnapshot = await getDocs(contactsQuery);
+        console.log('Found', contactsSnapshot.size, 'bookings in contacts collection for user', userId);
+        
+        if (contactsSnapshot.size > 0) {
+          const contactsData = contactsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            console.log('Contact data:', doc.id, data);
+            
+            // Process dates properly
+            let bookingDate = data.createdAt || data.bookingDate;
+            if (bookingDate && typeof bookingDate.toDate === 'function') {
+              bookingDate = bookingDate.toDate();
+            } else if (bookingDate && bookingDate.seconds) {
+              bookingDate = new Date(bookingDate.seconds * 1000);
+            }
+            
+            let eventDate = data.eventDate;
+            if (eventDate && typeof eventDate.toDate === 'function') {
+              eventDate = eventDate.toDate();
+            } else if (eventDate && eventDate.seconds) {
+              eventDate = new Date(eventDate.seconds * 1000);
+            }
+            
+            // Ensure amount is a number
+            const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : (data.amount || 0);
+            
+            return {
+              id: doc.id,
+              ...data,
+              bookingDate: bookingDate,
+              eventDate: eventDate,
+              amount: amount,
+              isFreeTrial: data.isFreeTrial || data.paymentMethod === 'free_trial' || amount === 0,
+              eventName: data.eventName || data.EventName || 'Event'
+            };
+          });
+          console.log('Processed contacts data:', contactsData);
+          setUserBookings(contactsData);
+          return; // Exit if we found contacts
+        }
+        
+        // If still no bookings found, try to match by phone number
+        if (userData && (userData.phoneNumber || userData.phone)) {
+          const phoneNumber = userData.phoneNumber || userData.phone;
+          console.log('No bookings found, trying to match by phone number:', phoneNumber);
+          
+          // Try to find bookings by phone number
+          const phoneBookingsQuery = query(
+            collection(db, 'bookings'),
+            where('phoneNumber', '==', phoneNumber),
+            orderBy('bookingDate', 'desc')
+          );
+          const phoneBookingsSnapshot = await getDocs(phoneBookingsQuery);
+          console.log('Found', phoneBookingsSnapshot.size, 'bookings by phone number for user', userId);
+          
+          if (phoneBookingsSnapshot.size > 0) {
+            const phoneBookingsData = phoneBookingsSnapshot.docs.map(doc => {
+              const data = doc.data();
+              console.log('Phone booking data:', doc.id, data);
+              
+              // Process dates properly
+              let bookingDate = data.bookingDate;
+              if (data.bookingDate && typeof data.bookingDate.toDate === 'function') {
+                bookingDate = data.bookingDate.toDate();
+              } else if (data.bookingDate && data.bookingDate.seconds) {
+                bookingDate = new Date(data.bookingDate.seconds * 1000);
+              }
+              
+              let eventDate = data.eventDate;
+              if (data.eventDate && typeof data.eventDate.toDate === 'function') {
+                eventDate = data.eventDate.toDate();
+              } else if (data.eventDate && data.eventDate.seconds) {
+                eventDate = new Date(data.eventDate.seconds * 1000);
+              }
+              
+              // Ensure amount is a number
+              const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
+              
+              return {
+                id: doc.id,
+                ...data,
+                bookingDate: bookingDate,
+                eventDate: eventDate,
+                amount: amount || 0,
+                isFreeTrial: data.isFreeTrial || data.paymentMethod === 'free_trial' || amount === 0
+              };
+            });
+            console.log('Processed phone bookings data:', phoneBookingsData);
+            setUserBookings(phoneBookingsData);
+            return;
           }
           
-          let eventDate = data.eventDate;
-          if (data.eventDate && typeof data.eventDate.toDate === 'function') {
-            eventDate = data.eventDate.toDate();
-          } else if (data.eventDate && data.eventDate.seconds) {
-            eventDate = new Date(data.eventDate.seconds * 1000);
-          }
+          // Try contacts by phone number
+          const phoneContactsQuery = query(
+            collection(db, 'contacts'),
+            where('phone', '==', phoneNumber),
+            orderBy('createdAt', 'desc')
+          );
+          const phoneContactsSnapshot = await getDocs(phoneContactsQuery);
+          console.log('Found', phoneContactsSnapshot.size, 'contacts by phone number for user', userId);
           
-          return {
-            id: doc.id,
-            ...data,
-            bookingDate: bookingDate,
-            eventDate: eventDate,
-            amount: typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount
-          };
-        });
-        setUserBookings(bookingsData);
+          if (phoneContactsSnapshot.size > 0) {
+            const phoneContactsData = phoneContactsSnapshot.docs.map(doc => {
+              const data = doc.data();
+              console.log('Phone contact data:', doc.id, data);
+              
+              // Process dates properly
+              let bookingDate = data.createdAt || data.bookingDate;
+              if (bookingDate && typeof bookingDate.toDate === 'function') {
+                bookingDate = bookingDate.toDate();
+              } else if (bookingDate && bookingDate.seconds) {
+                bookingDate = new Date(bookingDate.seconds * 1000);
+              }
+              
+              let eventDate = data.eventDate;
+              if (eventDate && typeof eventDate.toDate === 'function') {
+                eventDate = eventDate.toDate();
+              } else if (eventDate && eventDate.seconds) {
+                eventDate = new Date(eventDate.seconds * 1000);
+              }
+              
+              // Ensure amount is a number
+              const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : (data.amount || 0);
+              
+              return {
+                id: doc.id,
+                ...data,
+                bookingDate: bookingDate,
+                eventDate: eventDate,
+                amount: amount,
+                isFreeTrial: data.isFreeTrial || data.paymentMethod === 'free_trial' || amount === 0,
+                eventName: data.eventName || data.EventName || 'Event'
+              };
+            });
+            console.log('Processed phone contacts data:', phoneContactsData);
+            setUserBookings(phoneContactsData);
+            return;
+          }
+        }
+        
+        // If we get here, no bookings were found
+        console.log('No bookings found for user', userId);
+        setUserBookings([]);
       } catch (bookingsError) {
         console.error('Error fetching bookings:', bookingsError);
         setUserBookings([]);
@@ -209,16 +376,6 @@ const NewRegistrations = () => {
     }
   };
 
-  // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   // Format payment method for display
   const formatPaymentMethod = (method) => {
     if (!method) return 'Razorpay';
@@ -243,6 +400,47 @@ const NewRegistrations = () => {
     // Return mapped name or capitalize the method name
     return methodMap[method.toLowerCase()] || 
            method.charAt(0).toUpperCase() + method.slice(1).replace(/_/g, ' ');
+  };
+
+  // Function to determine display name for payment method (similar to bookings component)
+  const getPaymentMethodDisplayName = (booking) => {
+    if (booking.isFreeTrial || booking.paymentMethod === 'free_trial') {
+      return 'Free Trial';
+    } else if (booking.paymentMethod) {
+      // Map common payment methods to user-friendly names
+      const methodMap = {
+        'card': 'Card',
+        'credit_card': 'Credit Card',
+        'debit_card': 'Debit Card',
+        'creditcard': 'Credit Card',
+        'debitcard': 'Debit Card',
+        'upi': 'UPI',
+        'netbanking': 'Internet Banking',
+        'net_banking': 'Internet Banking',
+        'wallet': 'Wallet',
+        'emi': 'EMI',
+        'razorpay': 'Razorpay'
+      };
+      
+      return methodMap[booking.paymentMethod.toLowerCase()] || 
+             booking.paymentMethod.charAt(0).toUpperCase() + booking.paymentMethod.slice(1).replace(/_/g, ' ');
+    } else {
+      // Check if amount is 0 to determine if it's a free trial
+      if (booking.amount === 0 || booking.amount === '0') {
+        return 'Free Trial';
+      }
+      return 'Razorpay';
+    }
+  };
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
   };
 
   if (loading) {
@@ -498,7 +696,7 @@ const NewRegistrations = () => {
                             <span className="booking-event">{booking.eventName || 'Event'}</span>
                             <span className={`booking-status ${booking.status || 'unknown'}`}>
                               {booking.status || 'Unknown'}
-                              {booking.isFreeTrial && ' (Free Trial)'}
+                              {(booking.isFreeTrial || booking.paymentMethod === 'free_trial' || booking.amount === 0) && ' (Free Trial)'}
                             </span>
                           </div>
                           <div className="booking-details">
@@ -515,13 +713,15 @@ const NewRegistrations = () => {
                             <div className="detail-row">
                               <span className="detail-label">Amount:</span>
                               <span className="detail-value">
-                                {formatCurrency(typeof booking.amount === 'number' ? booking.amount : (booking.amount || 0))}
+                                {(booking.isFreeTrial || booking.paymentMethod === 'free_trial' || booking.amount === 0) ? 
+                                  'FREE' : 
+                                  formatCurrency(typeof booking.amount === 'number' ? booking.amount : (booking.amount || 0))}
                               </span>
                             </div>
                             <div className="detail-row">
                               <span className="detail-label">Payment Method:</span>
                               <span className="detail-value">
-                                {formatPaymentMethod(booking.paymentMethod) || (booking.isFreeTrial ? 'Free Trial' : 'N/A')}
+                                {getPaymentMethodDisplayName(booking)}
                               </span>
                             </div>
                             <div className="detail-row">
@@ -537,6 +737,44 @@ const NewRegistrations = () => {
                           </div>
                         </div>
                       ))}
+                      {/* Payment Summary Section */}
+                      <div className="bookings-summary">
+                        <h4>Payment Summary</h4>
+                        <div className="summary-details">
+                          <div className="summary-row">
+                            <span className="summary-label">Total Events Booked:</span>
+                            <span className="summary-value">{userBookings.length}</span>
+                          </div>
+                          <div className="summary-row">
+                            <span className="summary-label">Total Amount Paid:</span>
+                            <span className="summary-value">
+                              {formatCurrency(userBookings.reduce((total, booking) => {
+                                if (booking.isFreeTrial || booking.paymentMethod === 'free_trial' || booking.amount === 0) {
+                                  return total;
+                                }
+                                const amount = typeof booking.amount === 'string' ? parseFloat(booking.amount) : booking.amount;
+                                return total + (typeof amount === 'number' && !isNaN(amount) ? amount : 0);
+                              }, 0))}
+                            </span>
+                          </div>
+                          <div className="summary-row">
+                            <span className="summary-label">Free Trials Used:</span>
+                            <span className="summary-value">
+                              {userBookings.filter(booking => 
+                                booking.isFreeTrial || booking.paymentMethod === 'free_trial' || booking.amount === 0
+                              ).length}
+                            </span>
+                          </div>
+                          <div className="summary-row">
+                            <span className="summary-label">Paid Bookings:</span>
+                            <span className="summary-value">
+                              {userBookings.filter(booking => 
+                                !booking.isFreeTrial && booking.paymentMethod !== 'free_trial' && booking.amount > 0
+                              ).length}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <p className="no-bookings">No payment history found.</p>

@@ -568,6 +568,46 @@
   padding: 20px;
 }
 
+.bookings-summary {
+  background: #333;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid #444;
+}
+
+.bookings-summary h4 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: #fff;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #444;
+}
+
+.summary-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.summary-label {
+  color: #999;
+  font-weight: 500;
+}
+
+.summary-value {
+  color: #F15A24;
+  font-weight: 600;
+  text-align: right;
+}
+
 .modal-footer {
   padding: 20px;
   border-top: 1px solid #333;
@@ -677,7 +717,7 @@
     flex: 1 1 40%;
   }
   
-  .profile-details, .stats-grid, .booking-details {
+  .profile-details, .stats-grid, .booking-details, .summary-details {
     grid-template-columns: 1fr;
   }
   
