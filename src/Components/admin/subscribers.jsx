@@ -1020,6 +1020,26 @@ const Subscribers = () => {
            normalizedMethod.charAt(0).toUpperCase() + normalizedMethod.slice(1).replace(/_/g, ' ');
   };
 
+  // Function to handle contact button click - opens dialer on mobile
+  const handleContactClick = (phoneNumber) => {
+    // Remove any non-digit characters except +
+    const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
+    
+    // If it's a valid phone number, open dialer
+    if (cleanNumber && (cleanNumber.startsWith('+91') || cleanNumber.length === 10)) {
+      // For Indian numbers, ensure proper format
+      let formattedNumber = cleanNumber;
+      if (cleanNumber.length === 10) {
+        formattedNumber = '+91' + cleanNumber;
+      }
+      
+      window.location.href = `tel:${formattedNumber}`;
+    } else {
+      // If not a valid number, show alert
+      alert('Invalid phone number format');
+    }
+  };
+
   if (loading) {
     return (
       <div className="subscribers">
@@ -1173,7 +1193,10 @@ const Subscribers = () => {
             </div>
             
             <div className="subscriber-actions">
-              <button className="action-btn contact secondary">
+              <button 
+                className="action-btn contact secondary"
+                onClick={() => handleContactClick(subscriber.phone)}
+              >
                 <span className="btn-icon">📞</span>
                 Contact
               </button>

@@ -202,6 +202,59 @@ const Hero = () => {
           <span> Turns Thinkers </span>
         </motion.div>
 
+        {/* AI Fitness Tracker Card - Only visible on desktop */}
+        {!mobile && (
+          <motion.div
+            initial={{ right: "-1rem" }}
+            whileInView={{ right: "4rem" }}
+            transition={transition}
+            className="ai-fitness-card"
+            style={{ 
+              position: 'absolute', 
+              top: '23rem', 
+              right: '4rem', 
+              width: 'fit-content',
+              maxWidth: '280px'
+            }}
+          >
+            <div className="ai-card-content">
+              <h3 className="ai-card-title">AI Fitness Tracker</h3>
+              <div className="heartbeat-icon">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2" 
+                    stroke="#F15A24" 
+                    strokeWidth="2" 
+                    fill="none" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round">
+                    <animate attributeName="d" 
+                      dur="1.5s" 
+                      repeatCount="indefinite" 
+                      values="M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2;
+                              M3 12h2l2-3 2 6 2-4 2 3h2l2-4 2 5h2;
+                              M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2"/>
+                  </path>
+                </svg>
+              </div>
+              <p>Get personalized workout plans and nutrition advice powered by AI</p>
+              <div className="ai-features">
+                <div className="feature">
+                  <span className="feature-icon">✓</span>
+                  <span>Daily calorie tracker</span>
+                </div>
+                <div className="feature">
+                  <span className="feature-icon">✓</span>
+                  <span>Personalised AI assistant</span>
+                </div>
+                <div className="feature">
+                  <span className="feature-icon">✓</span>
+                  <span>Workout tracker</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Foreground hero images removed so the background image stands alone */}
 
         <motion.div

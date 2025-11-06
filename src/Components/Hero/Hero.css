@@ -1,9 +1,9 @@
-
 .hero {
   display: flex;
   justify-content: space-between;
   padding-top: 50px;
   padding-bottom: 300px;
+  
  
 }
 
@@ -135,6 +135,71 @@
   border: 2px solid var(--orange);
 }
 
+/* AI Fitness Tracker Card */
+.ai-fitness-card {
+  background: rgba(31, 31, 31, 0.7); /* Slightly transparent background */
+  backdrop-filter: blur(5px); /* Reduced blur for better visibility */
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  border: 1px solid #F15A24;
+  box-shadow: 0 0 15px rgba(241, 90, 36, 0.3);
+  color: white;
+  max-width: 350px;
+  text-align: center;
+}
+
+.ai-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ai-card-title {
+  margin: 0;
+  color: white;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.heartbeat-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0.25rem 0;
+}
+
+.ai-fitness-card p {
+  font-size: 0.8rem;
+  color: #cccccc;
+  margin: 0;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.ai-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.feature-icon {
+  color: #F15A24;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
 /* right side */
 .auth-buttons {
   display: flex;
@@ -240,6 +305,7 @@
 @media screen and (max-width: 768px) {
   .hero {
     flex-direction: column;
+    padding-bottom: 100px;
   }
 
   .hero-blur {
@@ -301,6 +367,9 @@
     right: auto;
     align-self: center; /* Center it horizontally */
     z-index: 1; 
+    width: 80%;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
   }
 
   .calories {
@@ -310,6 +379,9 @@
     top: auto;
     right: auto;
     align-self: center; /* Center it horizontally */
+    width: 80%;
+    padding: 1rem;
+    font-size: 0.9rem;
   }
 
   .hero-img {
@@ -329,5 +401,39 @@
     align-self: center;
     z-index: -1;
     margin-top: 0rem; /* Adjust as needed */
+  }
+  
+  /* Mobile styles for AI Fitness Tracker Card */
+  .ai-fitness-card {
+    max-width: 80%;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    align-self: center;
+    position: static;
+    transform: none;
+    width: 80%;
+  }
+  
+  .ai-card-title {
+    font-size: 1rem;
+  }
+  
+  .ai-fitness-card p {
+    font-size: 0.7rem;
+  }
+  
+  .feature {
+    justify-content: center;
+    text-align: center;
+    font-size: 0.7rem;
+  }
+  
+  .feature-icon {
+    font-size: 0.7rem;
+  }
+  
+  .heartbeat-icon svg {
+    width: 30px;
+    height: 30px;
   }
 }

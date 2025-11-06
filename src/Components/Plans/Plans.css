@@ -122,7 +122,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .plan-card {
@@ -138,6 +138,7 @@
   min-height: 500px;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .plan-card::before {
@@ -296,6 +297,9 @@
 .features-section {
   flex-grow: 1;
   margin-bottom: 2rem;
+  /* Added to ensure consistent spacing */
+  display: flex;
+  flex-direction: column;
 }
 
 .features-title {
@@ -314,6 +318,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  /* Added to ensure list takes up available space */
+  flex-grow: 1;
 }
 
 .feature-item {
@@ -339,6 +345,7 @@
 /* CTA Button */
 .plan-footer {
   margin-top: auto;
+  /* This ensures the button stays at the bottom */
 }
 
 .cta-button {
