@@ -6,6 +6,12 @@ const urlsToCache = [
   '/index.html',
   '/logo192.png',
   '/logo512.png',
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
+  '/apple-touch-icon.png',
+  '/favicon.ico',
+  '/logo.png',
+  '/techvase.png',
   '/offline.html'
 ];
 
@@ -115,4 +121,10 @@ self.addEventListener('message', event => {
 // Handle push notifications (if needed in the future)
 self.addEventListener('push', event => {
   console.log('Push event received:', event);
+});
+
+// Add event listener for app installation
+self.addEventListener('appinstalled', event => {
+  console.log('App installed successfully!');
+  // You can add analytics or other tracking here
 });

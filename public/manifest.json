@@ -4,9 +4,9 @@
   "description": "Run and Develop - Fitness and Community App",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/logo.png",
+      "sizes": "46x46",
+      "type": "image/png"
     },
     {
       "src": "/android-chrome-192x192.png",
@@ -29,5 +29,8 @@
   "display": "standalone",
   "theme_color": "#F15A24",
   "background_color": "#3c3f45",
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en"
 }

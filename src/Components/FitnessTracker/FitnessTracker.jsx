@@ -12,7 +12,7 @@ import fitnessService from '../../services/fitnessService';
 const FitnessTracker = () => {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [ userProfile, setUserProfile ] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [profileSetupComplete, setProfileSetupComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0); // Used to force refresh of dashboard
@@ -42,10 +42,16 @@ const FitnessTracker = () => {
       setRefreshKey(prev => prev + 1);
     };
 
+    // Listen for navigation events from dashboard
+    const handleNavigation = (event) => {
+      setActiveTab(event.detail);
+    };
+
     window.addEventListener('workoutLogged', handleWorkoutEvent);
     window.addEventListener('workoutDeleted', handleWorkoutEvent);
     window.addEventListener('mealLogged', handleMealEvent);
     window.addEventListener('mealDeleted', handleMealEvent);
+    window.addEventListener('navigateToTab', handleNavigation);
 
     return () => {
       unsubscribe();
@@ -53,6 +59,7 @@ const FitnessTracker = () => {
       window.removeEventListener('workoutDeleted', handleWorkoutEvent);
       window.removeEventListener('mealLogged', handleMealEvent);
       window.removeEventListener('mealDeleted', handleMealEvent);
+      window.removeEventListener('navigateToTab', handleNavigation);
     };
   }, []);
 

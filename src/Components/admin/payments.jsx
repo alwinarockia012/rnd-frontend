@@ -155,8 +155,24 @@ const Payments = () => {
     }
     
     try {
-      const userDocRef = doc(db, 'users', userId);
-      const userDoc = await getDoc(userDocRef);
+      // Create a promise with timeout for the user query
+      const userQueryWithTimeout = new Promise(async (resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Timeout while fetching user details'));
+        }, 5000); // 5 second timeout
+        
+        try {
+          const userDocRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userDocRef);
+          clearTimeout(timeoutId);
+          resolve(userDoc);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      });
+      
+      const userDoc = await userQueryWithTimeout;
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
@@ -174,49 +190,6 @@ const Payments = () => {
     }
     return null;
   };
-
-  // Filter payments based on status and payment method
-  const filteredPayments = payments.filter(payment => {
-    // Status filter
-    if (filterStatus !== 'all' && payment.status !== filterStatus) {
-      return false;
-    }
-    
-    // Payment method filter
-    if (filterPaymentMethod !== 'all') {
-      // Get the actual payment method display name
-      const paymentMethodDisplayName = getPaymentMethodDisplayName(payment);
-      
-      // Map display names to filter values
-      const displayNameToFilterMap = {
-        'Free Trial': 'free_trial',
-        'Card': 'card',
-        'Credit Card': 'card',
-        'Debit Card': 'card',
-        'UPI': 'upi',
-        'Internet Banking': 'netbanking',
-        'Wallet': 'wallet',
-        'EMI': 'emi',
-        'Razorpay': 'razorpay'
-      };
-      
-      const normalizedDisplayName = displayNameToFilterMap[paymentMethodDisplayName] || paymentMethodDisplayName.toLowerCase();
-      
-      if (normalizedDisplayName !== filterPaymentMethod) {
-        return false;
-      }
-    }
-    
-    return true;
-  });
-
-  // Calculate total revenue
-  const totalRevenue = filteredPayments
-    .filter(payment => payment.status === 'confirmed' && !payment.isFreeTrial)
-    .reduce((sum, payment) => {
-      const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
-      return sum + (amount || 0);
-    }, 0);
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -268,22 +241,42 @@ const Payments = () => {
     }
     
     try {
-      const response = await fetch(getApiUrl(`/api/payment-details/${paymentId}`));
-      if (response.ok) {
-        const data = await response.json();
-        // Cache the result
-        setPaymentMethodCache(prev => ({
-          ...prev,
-          [paymentId]: data.paymentMethodDetails
-        }));
-        return data.paymentMethodDetails;
-      } else {
-        console.log('Failed to fetch payment details for ID:', paymentId, 'Status:', response.status);
-      }
+      // Create a promise with timeout for the API call
+      const fetchWithTimeout = new Promise(async (resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Timeout while fetching payment details'));
+        }, 5000); // 5 second timeout
+        
+        try {
+          const response = await fetch(getApiUrl(`/api/payment-details/${paymentId}`));
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const data = await response.json();
+            resolve(data);
+          } else {
+            reject(new Error(`Failed to fetch payment details. Status: ${response.status}`));
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      });
+      
+      const data = await fetchWithTimeout;
+      
+      // Cache the result
+      setPaymentMethodCache(prev => ({
+        ...prev,
+        [paymentId]: data.paymentMethodDetails
+      }));
+      
+      return data.paymentMethodDetails;
     } catch (error) {
       console.error('Error fetching payment method details for ID:', paymentId, error);
+      // Return null to indicate failure but prevent app crash
+      return null;
     }
-    return null;
   };
 
   // Function to determine display name for payment method
@@ -377,6 +370,49 @@ const Payments = () => {
       return '#4caf50'; // Green for others
     }
   };
+
+  // Filter payments based on status and payment method
+  const filteredPayments = payments.filter(payment => {
+    // Status filter
+    if (filterStatus !== 'all' && payment.status !== filterStatus) {
+      return false;
+    }
+    
+    // Payment method filter
+    if (filterPaymentMethod !== 'all') {
+      // Get the actual payment method display name
+      const paymentMethodDisplayName = getPaymentMethodDisplayName(payment);
+      
+      // Map display names to filter values
+      const displayNameToFilterMap = {
+        'Free Trial': 'free_trial',
+        'Card': 'card',
+        'Credit Card': 'card',
+        'Debit Card': 'card',
+        'UPI': 'upi',
+        'Internet Banking': 'netbanking',
+        'Wallet': 'wallet',
+        'EMI': 'emi',
+        'Razorpay': 'razorpay'
+      };
+      
+      const normalizedDisplayName = displayNameToFilterMap[paymentMethodDisplayName] || paymentMethodDisplayName.toLowerCase();
+      
+      if (normalizedDisplayName !== filterPaymentMethod) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+
+  // Calculate total revenue
+  const totalRevenue = filteredPayments
+    .filter(payment => payment.status === 'confirmed' && !payment.isFreeTrial)
+    .reduce((sum, payment) => {
+      const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount;
+      return sum + (amount || 0);
+    }, 0);
 
   // Function to show notification
   const showNotification = (message, type = 'info') => {
@@ -520,22 +556,6 @@ const Payments = () => {
             <option value="free_trial">Free Trial</option>
             <option value="razorpay">Razorpay</option>
           </select>
-          
-          {/* Add button to confirm today's payments */}
-          <button 
-            onClick={confirmTodaysPayments}
-            className="status-filter"
-            style={{ 
-              backgroundColor: '#4CAF50', 
-              color: 'white', 
-              border: 'none', 
-              padding: '5px 10px', 
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Confirm Today's Payments
-          </button>
         </div>
       </div>
 
@@ -563,7 +583,6 @@ const Payments = () => {
                 <th>Amount</th>
                 <th>Payment Method</th>
                 <th>Status</th>
-                <th>Actions</th>
                 <th>Transaction ID</th>
               </tr>
             </thead>
@@ -629,43 +648,6 @@ const Payments = () => {
                       <span className={`status-badge status-${payment.status || 'unknown'}`}>
                         {payment.status || 'N/A'}
                       </span>
-                    </td>
-                    <td>
-                      {payment.status !== 'confirmed' && (
-                        <button
-                          onClick={() => updatePaymentStatus(payment.id, 'confirmed')}
-                          disabled={updatingPayment === payment.id}
-                          style={{
-                            backgroundColor: '#4CAF50',
-                            color: 'white',
-                            border: 'none',
-                            padding: '3px 8px',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontSize: '12px'
-                          }}
-                        >
-                          {updatingPayment === payment.id ? 'Confirming...' : 'Confirm'}
-                        </button>
-                      )}
-                      {payment.status !== 'failed' && (
-                        <button
-                          onClick={() => updatePaymentStatus(payment.id, 'failed')}
-                          disabled={updatingPayment === payment.id}
-                          style={{
-                            backgroundColor: '#f44336',
-                            color: 'white',
-                            border: 'none',
-                            padding: '3px 8px',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            marginLeft: '5px'
-                          }}
-                        >
-                          {updatingPayment === payment.id ? 'Failing...' : 'Fail'}
-                        </button>
-                      )}
                     </td>
                     <td style={{ color: '#e0e0e0' }}>{payment.id?.substring(0, 8) || 'N/A'}</td>
                   </tr>

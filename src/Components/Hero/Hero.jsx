@@ -198,8 +198,91 @@ const Hero = () => {
           transition={transition}
           className="heart-rate"
         >
-          <span>Where Runners </span>
-          <span> Turns Thinkers </span>
+          <div className="heart-rate-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2" 
+                stroke="#F15A24" 
+                strokeWidth="2" 
+                fill="none" 
+                strokeLinecap="round" 
+                strokeLinejoin="round">
+                <animate attributeName="d" 
+                  dur="1.5s" 
+                  repeatCount="indefinite" 
+                  values="M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2;
+                          M3 12h2l2-3 2 6 2-4 2 3h2l2-4 2 5h2;
+                          M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2"/>
+              </path>
+            </svg>
+          </div>
+          <div className="heart-rate-content">
+            <span className="heart-rate-title">Where Runners</span>
+            <span className="heart-rate-subtitle">Turns Thinkers</span>
+          </div>
+        </motion.div>
+
+        {/* AI Fitness Tracker Card - Now visible on all devices with responsive design */}
+        <motion.div
+          initial={mobile ? { opacity: 0, y: 20 } : { right: "-1rem" }}
+          whileInView={mobile ? { opacity: 1, y: 0 } : { right: "4rem" }}
+          transition={transition}
+          className="ai-fitness-card"
+          style={{ 
+            position: mobile ? 'relative' : 'absolute', 
+            top: mobile ? 'auto' : '23rem', 
+            right: mobile ? 'auto' : '4rem', 
+            width: mobile ? '80%' : 'fit-content',
+            maxWidth: '280px',
+            marginTop: mobile ? '1rem' : '1.5rem',
+            alignSelf: mobile ? 'center' : 'auto',
+            order: mobile ? 4 : 'auto'
+          }}
+        >
+          <div className="ai-card-content">
+            <h3 className="ai-card-title">AI Fitness Tracker</h3>
+            <div className="heartbeat-icon">
+              <svg 
+                width={mobile ? "30" : "36"} 
+                height={mobile ? "30" : "36"} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path 
+                  d="M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2" 
+                  stroke="#F15A24" 
+                  strokeWidth="2" 
+                  fill="none" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <animate 
+                    attributeName="d" 
+                    dur="1.5s" 
+                    repeatCount="indefinite" 
+                    values="M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2;
+                            M3 12h2l2-3 2 6 2-4 2 3h2l2-4 2 5h2;
+                            M3 12h2l2-4 2 8 2-6 2 4h2l2-6 2 6h2"
+                  />
+                </path>
+              </svg>
+            </div>
+            <p>Get personalized workout plans and nutrition advice powered by AI</p>
+            <div className="ai-features">
+              <div className="feature">
+                <span className="feature-icon">✓</span>
+                <span>Daily caorie tracker</span>
+              </div>
+              <div className="feature">
+                <span className="feature-icon">✓</span>
+                <span>Personalised AI assistant</span>
+              </div>
+              <div className="feature">
+                <span className="feature-icon">✓</span>
+                <span>Workout tracker</span>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Foreground hero images removed so the background image stands alone */}
@@ -210,8 +293,18 @@ const Hero = () => {
           transition={transition}
           className="calories"
         >
-          <div>
-            <span>Distance run together 5km this week</span>
+          <div className="calories-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="#F15A24" strokeWidth="2" />
+              <path d="M12 6v6l4 2" stroke="#F15A24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="calories-content">
+            <span className="calories-title">Distance run together</span>
+            <span className="calories-subtitle">5km this week</span>
+          </div>
+          <div className="progress-bar">
+            <div className="progress-fill"></div>
           </div>
         </motion.div>
       </div>

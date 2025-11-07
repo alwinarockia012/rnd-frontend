@@ -12,6 +12,9 @@ import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 // Import our stats scheduler
 import statsScheduler from './services/statsScheduler';
 
+// Import InstallPrompt component
+import InstallPrompt from './Components/InstallPrompt/InstallPrompt';
+
 import Home from './Components/Home';
 import EventsPage from './Components/EventsPage';
 import SignIn from './Components/SignIn/SignIn';
@@ -150,6 +153,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <InstallPrompt />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/events" element={<EventsPage />} />

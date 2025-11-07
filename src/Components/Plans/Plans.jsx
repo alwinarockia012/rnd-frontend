@@ -1042,16 +1042,6 @@ const Plans = () => {
               </div>
               
               <div className="price-section">
-                <div className="price-comparison">
-                  {plan.originalPrice && (
-                    <span className="original-price">₹{plan.originalPrice}</span>
-                  )}
-                  {plan.originalPrice && (
-                    <span className="discount-tag">
-                      SAVE ₹{plan.originalPrice - plan.price}
-                    </span>
-                  )}
-                </div>
                 <div className="current-price-wrapper">
                   <span className="currency">₹</span>
                   <span className="current-price">{plan.price}</span>
@@ -1119,19 +1109,9 @@ const Plans = () => {
                     <p>{selectedPlan?.subtitle || 'Subscription Plan'}</p>
                   </div>
                   <div className="price-summary">
-                    {selectedPlan?.originalPrice && (
-                      <span className="original-price-modal">₹{selectedPlan?.originalPrice}</span>
-                    )}
                     <span className="final-price">₹{selectedPlan?.price}</span>
                   </div>
                 </div>
-                {selectedPlan?.originalPrice && (
-                  <div className="savings-info">
-                    <span className="savings-text">
-                      You save ₹{selectedPlan?.originalPrice - selectedPlan?.price}!
-                    </span>
-                  </div>
-                )}
               </div>
               
               {/* Razorpay Payment Integration */}

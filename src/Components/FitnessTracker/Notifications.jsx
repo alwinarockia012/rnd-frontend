@@ -43,7 +43,7 @@ const Notifications = ({ user, meals, workouts, profile }) => {
       if (nutritionTotals.protein < 50) {
         newNotifications.push({
           id: 'low-protein',
-          type: 'warning',
+          type: 'info',
           title: 'Low Protein Intake',
           message: 'You\'ve only consumed ' + nutritionTotals.protein + 'g of protein today. Consider adding a protein-rich snack!',
           priority: 'high'

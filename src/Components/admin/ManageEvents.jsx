@@ -19,6 +19,7 @@ const ManageEvents = () => {
         name: '',
         date: '',
         description: '',
+        location: '',
         imageUrl: '',
         imageFile: null
     });
@@ -252,6 +253,7 @@ const ManageEvents = () => {
                 name: pastEvent.name,
                 date: pastEvent.date,
                 description: pastEvent.description,
+                location: pastEvent.location,
                 imageUrl: imageUrl
             };
             
@@ -267,6 +269,7 @@ const ManageEvents = () => {
                 name: '', 
                 date: '', 
                 description: '', 
+                location: '',
                 imageUrl: '',
                 imageFile: null 
             });
@@ -571,6 +574,7 @@ const ManageEvents = () => {
                         <input type="text" name="name" value={pastEvent.name} onChange={handlePastChange} placeholder="Event Name" required />
                         <input type="date" name="date" value={pastEvent.date} onChange={handlePastChange} required />
                         <textarea name="description" value={pastEvent.description} onChange={handlePastChange} placeholder="Description"></textarea>
+                        <input type="text" name="location" value={pastEvent.location} onChange={handlePastChange} placeholder="Location" />
                         <div className="image-upload-container">
                             <div className="file-input-wrapper">
                                 <input 
@@ -696,7 +700,10 @@ const ManageEvents = () => {
                             )}
                             {/* Add imageUrl field to edit modal for past events */}
                             {editingEvent.type === 'past' && (
-                                <input type="text" name="imageUrl" value={editingEvent.imageUrl || ''} onChange={(e) => setEditingEvent({ ...editingEvent, imageUrl: e.target.value })} placeholder="Image URL" />
+                                <>
+                                    <input type="text" name="location" value={editingEvent.location || ''} onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })} placeholder="Location" />
+                                    <input type="text" name="imageUrl" value={editingEvent.imageUrl || ''} onChange={(e) => setEditingEvent({ ...editingEvent, imageUrl: e.target.value })} placeholder="Image URL" />
+                                </>
                             )}
                             <button type="submit">Update Event</button>
                             <button onClick={() => setIsEditing(false)}>Cancel</button>
