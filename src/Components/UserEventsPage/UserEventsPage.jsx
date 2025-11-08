@@ -261,13 +261,18 @@ function UserEventsPage() {
         firebaseService.getUpcomingEvents(),
         firebaseService.getPastEvents()
       ]);
+      console.log('fetchEvents -> upcoming:', upcoming);
+      console.log('fetchEvents -> past:', past);
       
       // Filter to show only ONE "Weekly Community Run" event and ensure proper ID handling
+      const getEventName = (e) => (e.name || e.title || '').toString();
+
       const weeklyCommunityRun = upcoming.filter(event => 
-        event.name && event.name.toLowerCase().includes('weekly community run')
+        getEventName(event).toLowerCase().includes('weekly community run')
       ).map(event => ({
         ...event,
-        id: String(event.id) // Ensure ID is a string for consistent comparison
+        id: String(event.id), // Ensure ID is a string for consistent comparison
+        image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path
       }));
       
       // Use only the first event if there are multiple instances
@@ -275,14 +280,34 @@ function UserEventsPage() {
       
       // Filter past events to show only "Weekly Community Run" events
       const pastWeeklyCommunityRun = past.filter(event => 
-        event.name && event.name.toLowerCase().includes('weekly community run')
+        getEventName(event).toLowerCase().includes('weekly community run')
       ).map(event => ({
         ...event,
-        id: String(event.id) // Ensure ID is a string for consistent comparison
+        id: String(event.id), // Ensure ID is a string for consistent comparison
+        image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path
       }));
+
+      console.log('pastWeeklyCommunityRun (filtered):', pastWeeklyCommunityRun);
       
       setUpcomingEvents(filteredUpcomingEvents);
-      setPastEvents(pastWeeklyCommunityRun.length > 0 ? [pastWeeklyCommunityRun[0]] : []);
+
+      if (pastWeeklyCommunityRun.length > 0) {
+        setPastEvents([pastWeeklyCommunityRun[0]]);
+        console.log('Using filtered past weekly event:', pastWeeklyCommunityRun[0]);
+      } else if (past && past.length > 0) {
+        // Fallback: if no past weekly community run found, show all past events (mapped)
+        const mappedPast = past.map(event => ({
+          ...event,
+          id: String(event.id),
+          image: event.image || event.imageUrl || event.imageURL || event.imagePath || event.image_path,
+          title: event.title || event.name
+        }));
+        setPastEvents(mappedPast);
+        console.log('No filtered weekly past event found — falling back to all past events:', mappedPast);
+      } else {
+        setPastEvents([]);
+        console.log('No past events returned from service');
+      }
     } catch (err) {
       console.error('Error fetching events:', err);
       setError('Failed to load events. Please try again later.');
@@ -989,20 +1014,6 @@ function UserEventsPage() {
                       </div>
                       
                       <p className="event-description">{event.description}</p>
-                      
-                      <div className="event-stats">
-                        <div className="participants-info">
-                          <div className="progress-container">
-                            <div 
-                              className="progress-fill" 
-                              style={{ width: `${getProgressPercentage(event.participants || 0, event.maxParticipants || 100)}%` }}
-                            ></div>
-                          </div>
-                          <div className="progress-text">
-                            {event.participants || 0} participants
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 ))

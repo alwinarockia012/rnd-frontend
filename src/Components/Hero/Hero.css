@@ -135,6 +135,7 @@
   border: 2px solid var(--orange);
 }
 
+<<<<<<< HEAD
 /* AI Fitness Tracker Card */
 .ai-fitness-card {
   background: rgba(31, 31, 31, 0.7); /* Slightly transparent background */
@@ -242,23 +243,172 @@
 }
 
 
+=======
+>>>>>>> 58cd177b123db1e6e3c3d309dfe87725768b3825
 /* ✅ Bold, dark box for "Where Runners Become Doers" */
 .heart-rate {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  background-color: #1f1f1f;
+  flex-direction: row;
+  
+  background: rgba(31, 31, 31, 0.5); /* 50% transparency */
+  background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
   color: white;
-  font-weight: 600;
+  font-weight: 700;
   padding: 1rem 1.5rem;
-  align-items: flex-start;
-  border-radius: 8px;
+  align-items: center;
+  border-radius: 16px;
   position: absolute;
   right: 4rem;
   top: 7rem;
   width: fit-content;
   font-size: 1rem;
   text-align: left;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(241, 90, 36, 0.3);
+  backdrop-filter: blur(5px); /* Reduced blur for better visibility */
+  -webkit-backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.heart-rate:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(241, 90, 36, 0.6);
+}
+
+.heart-rate-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(241, 90, 36, 0.1);
+  border-radius: 50%;
+  padding: 0.4rem;
+  border: 1px solid rgba(241, 90, 36, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.heart-rate-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.heart-rate-title {
+  color: #F15A24;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+.heart-rate-subtitle {
+  font-weight: 400;
+  font-size: 1rem;
+  background: linear-gradient(to right, #ffffff, #cccccc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ✅ Bold, matching box for "5km run" (reverted from 2km) */
+.calories {
+  display: flex;
+  flex-direction: column;
+  background: rgba(31, 31, 31, 0.5); /* 50% transparency */
+  background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
+  color: white;
+  font-weight: 700;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  position: absolute;
+  top: 32rem;
+  right: 28rem;
+  width: fit-content;
+  font-size: 1rem;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(241, 90, 36, 0.3);
+  backdrop-filter: blur(5px); /* Reduced blur for better visibility */
+  -webkit-backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.calories:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(241, 90, 36, 0.6);
+}
+
+.calories-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(241, 90, 36, 0.1);
+  border-radius: 50%;
+  padding: 0.4rem;
+  border: 1px solid rgba(241, 90, 36, 0.3);
+  width: fit-content;
+  margin-bottom: 0.75rem;
+  animation: rotate 8s linear infinite;
+}
+
+.calories-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.calories-title {
+  color: #F15A24;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+.calories-subtitle {
+  font-weight: 400;
+  font-size: 1rem;
+  background: linear-gradient(to right, #ffffff, #cccccc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.4rem;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 65%;
+  background: linear-gradient(90deg, #F15A24, #FF8C42);
+  border-radius: 4px;
+  animation: progressAnimation 2s ease-in-out infinite alternate;
+}
+
+@keyframes progressAnimation {
+  0% {
+    width: 60%;
+  }
+  100% {
+    width: 80%;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Hero Images */
@@ -301,6 +451,51 @@
   -webkit-text-fill-color: #F15A24 ;
 }
 
+/* AI Fitness Tracker Card */
+.ai-fitness-card {
+  background: rgba(31, 31, 31, 0.5); /* 50% transparency */
+  background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
+  backdrop-filter: blur(5px); /* Reduced blur for better visibility */
+  -webkit-backdrop-filter: blur(5px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border: 1px solid rgba(241, 90, 36, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  color: white;
+  max-width: 350px;
+  text-align: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.ai-card-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ai-fitness-card p {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.feature {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+
+.feature-icon {
+  font-size: 1rem;
+  min-width: 24px;
+}
+
+.heartbeat-icon svg {
+  width: 24px;
+  height: 24px;
+}
 
 @media screen and (max-width: 768px) {
   .hero {
@@ -349,58 +544,199 @@
     background: none;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center items horizontally */
-    padding-top: 1rem; /* Adjust overall padding */
+    align-items: center;
+    padding-top: 1rem;
   }
 
   .auth-buttons {
     position: static;
-    margin-top: 1rem; /* Adjusted margin */
+    margin-top: 1rem;
     gap: 2rem;
   }
 
   .heart-rate {
-    position: static; /* Let it flow naturally */
-    margin-top: 1rem; /* Space from buttons */
+    position: static;
+    margin-top: 1rem;
     left: auto;
     top: auto;
     right: auto;
-    align-self: center; /* Center it horizontally */
+    align-self: center;
     z-index: 1; 
+<<<<<<< HEAD
     width: 80%;
     padding: 0.75rem 1rem;
     font-size: 0.9rem;
+=======
+    width: 70%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+    border-radius: 10px;
+    text-align: center;
+    align-items: center;
+    flex-direction: column;
+    background: rgba(31, 31, 31, 0.5); /* 50% transparency */
+    background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(241, 90, 36, 0.3);
+    backdrop-filter: blur(5px); /* Reduced blur for better visibility */
+    -webkit-backdrop-filter: blur(5px);
+  }
+
+  .heart-rate-icon {
+    margin-bottom: 0.4rem;
+    animation: pulse 2s infinite;
+    padding: 0.2rem;
+    width: 16px;
+    height: 16px;
+  }
+
+  .heart-rate-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .heart-rate-content {
+    align-items: center;
+  }
+
+  .heart-rate-title {
+    font-size: 0.8rem;
+  }
+
+  .heart-rate-subtitle {
+    font-size: 0.7rem;
+>>>>>>> 58cd177b123db1e6e3c3d309dfe87725768b3825
   }
 
   .calories {
-    position: static; /* Let it flow naturally */
-    margin-top: 1rem; /* Space from heart-rate */
+    position: static;
+    margin-top: 1rem;
     left: auto;
     top: auto;
     right: auto;
+<<<<<<< HEAD
     align-self: center; /* Center it horizontally */
     width: 80%;
     padding: 1rem;
     font-size: 0.9rem;
+=======
+    align-self: center;
+    width: 70%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+    border-radius: 10px;
+    text-align: center;
+    align-items: center;
+    background: rgba(31, 31, 31, 0.5); /* 50% transparency */
+    background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(241, 90, 36, 0.3);
+    backdrop-filter: blur(5px); /* Reduced blur for better visibility */
+    -webkit-backdrop-filter: blur(5px);
+  }
+
+  .calories-icon {
+    margin: 0 auto 0.4rem;
+    animation: rotate 8s linear infinite;
+    padding: 0.2rem;
+    width: 16px;
+    height: 16px;
+  }
+
+  .calories-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .calories-content {
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+
+  .calories-title {
+    font-size: 0.8rem;
+  }
+
+  .calories-subtitle {
+    font-size: 0.7rem;
+  }
+
+  .progress-bar {
+    height: 3px;
+    margin-top: 0.2rem;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 65%;
+    background: linear-gradient(90deg, #F15A24, #FF8C42);
+    border-radius: 3px;
+    animation: progressAnimation 2s ease-in-out infinite alternate;
+  }
+
+  /* Mobile styles for AI Fitness Tracker Card */
+  .ai-fitness-card {
+    max-width: 80%;
+    width: 80%;
+    margin-top: 1.5rem;
+    padding: 0.75rem;
+    align-self: center;
+    position: relative;
+    transform: none;
+    order: 4;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    background: rgba(31, 31, 31, 0.5); /* 50% transparency */
+    background: linear-gradient(135deg, rgba(31, 31, 31, 0.5) 0%, rgba(15, 15, 15, 0.5) 100%);
+    backdrop-filter: blur(5px); /* Reduced blur for better visibility */
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(241, 90, 36, 0.3);
+  }
+  
+  .ai-card-title {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .ai-fitness-card p {
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+  
+  .feature {
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 0.7rem;
+    padding: 0.3rem;
+  }
+  
+  .feature-icon {
+    font-size: 0.7rem;
+    min-width: 16px;
+  }
+  
+  .heartbeat-icon svg {
+    width: 24px;
+    height: 24px;
+>>>>>>> 58cd177b123db1e6e3c3d309dfe87725768b3825
   }
 
   .hero-img {
-    position: static; /* Let it flow naturally */
+    position: static;
     width: 15rem;
     left: auto;
     top: auto;
     align-self: center;
-    margin-top: 1rem; /* Space from calories */
+    margin-top: 1rem;
   }
 
   .hero-back {
-    position: static; /* Let it flow naturally */
+    position: static;
     width: 15rem;
     left: auto;
     top: auto;
     align-self: center;
     z-index: -1;
-    margin-top: 0rem; /* Adjust as needed */
+    margin-top: 0rem;
   }
   
   /* Mobile styles for AI Fitness Tracker Card */

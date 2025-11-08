@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FaFacebook,
-  FaTwitter,
   FaInstagram,
-  FaLinkedin,
   FaYoutube,
   FaMapMarkerAlt,
   FaPhone,
-  FaEnvelope,
   FaChevronDown,
-
+  FaEnvelope,
 } from 'react-icons/fa';
 import './Footer.css';
 
@@ -126,10 +122,7 @@ const Footer = () => {
                 <FaPhone className="contact-icon" />
                 <span>+91 82708 12842</span>
               </div>
-              <div className="contact-item">
-                <FaEnvelope className="contact-icon" />
-                <span>info@runanddevelop.com</span>
-              </div>
+
             </div>
           </CollapsibleSection>
         </div>

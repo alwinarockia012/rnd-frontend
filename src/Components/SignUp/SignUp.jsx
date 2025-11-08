@@ -168,7 +168,7 @@ const SignUp = () => {
 
   const handleTermsClick = (e) => {
     e.preventDefault();
-    navigate('/terms-and-conditions');
+    navigate('/terms');
   };
 
   const handleSignInClick = () => {

@@ -63,6 +63,33 @@
   color: var(--orange);
 }
 
+/* Install button styles */
+.install-header-btn {
+  background: #F15A24;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+}
+
+.install-header-btn:hover {
+  background: #d84a1e;
+}
+
+.install-header-btn.mobile {
+  margin-right: 1rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.mobile-header-right {
+  display: none;
+}
+
 /* Mobile drawer styles */
 .mobile-trigger {
   background: #141414;
@@ -113,4 +140,5 @@
 
 @media screen and (max-width: 767px) {
   .header-menu { display: none; }
+  .mobile-header-right { display: flex; align-items: center; }
 }

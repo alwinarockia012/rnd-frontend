@@ -590,8 +590,10 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 15px;
-  border-radius: 4px;
+  border-radius: 8px;
   background: #222222;
+  position: relative;
+  border-left: 4px solid #17a2b8;
 }
 
 .notification-item.notification-warning {
@@ -604,17 +606,20 @@
 
 .notification-content {
   flex: 1;
+  padding-right: 20px;
 }
 
 .notification-content h4 {
-  margin: 0 0 5px 0;
+  margin: 0 0 8px 0;
   color: #ffffff;
+  font-size: 16px;
 }
 
 .notification-content p {
   margin: 0;
   color: #cccccc;
   font-size: 14px;
+  line-height: 1.4;
 }
 
 .dismiss-button {
@@ -629,6 +634,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 
 .dismiss-button:hover {
@@ -845,7 +853,33 @@
   
   .notifications-panel {
     margin: 20px 0;
+    padding: 15px;
   }
+<<<<<<< HEAD
+=======
+  
+  .notification-item {
+    padding: 12px;
+    border-radius: 6px;
+  }
+  
+  .notification-content h4 {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  
+  .notification-content p {
+    font-size: 13px;
+  }
+  
+  .dismiss-button {
+    width: 25px;
+    height: 25px;
+    font-size: 18px;
+    top: 8px;
+    right: 8px;
+  }
+>>>>>>> 58cd177b123db1e6e3c3d309dfe87725768b3825
 }
 
 /* Mobile Responsive Font Sizing */
@@ -1073,4 +1107,8 @@
 .add-water-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 58cd177b123db1e6e3c3d309dfe87725768b3825

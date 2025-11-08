@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase'; // Assuming firebase is configured and db is exported from this path
+import { db, storage } from '../../firebase';
 import { collection, addDoc, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import firebaseService from '../../services/firebaseService';
 import { formatDate } from '../../utils/dateUtils';
 import './ManageEvents.css';
@@ -18,7 +19,9 @@ const ManageEvents = () => {
         name: '',
         date: '',
         description: '',
-        imageUrl: '' // Changed from image: null
+        location: '',
+        imageUrl: '',
+        imageFile: null
     });
 
     const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -109,8 +112,35 @@ const ManageEvents = () => {
     };
 
     const handlePastChange = (e) => {
-        // Directly update the state for imageUrl
-        setPastEvent({ ...pastEvent, [e.target.name]: e.target.value });
+        if (e.target.type === 'file') {
+            const file = e.target.files?.[0];
+            if (file) {
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file');
+                    e.target.value = ''; // Reset file input
+                    return;
+                }
+                
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size should be less than 5MB');
+                    e.target.value = ''; // Reset file input
+                    return;
+                }
+
+                setPastEvent(prev => ({ 
+                    ...prev, 
+                    imageFile: file,
+                    imageUrl: '' // Clear imageUrl when a file is selected
+                }));
+            }
+        } else {
+            setPastEvent(prev => ({ 
+                ...prev, 
+                [e.target.name]: e.target.value 
+            }));
+        }
     };
 
     // Handle changes for main upcoming event
@@ -198,27 +228,56 @@ const ManageEvents = () => {
 
     const handlePastSubmit = async (e) => {
         e.preventDefault();
-        // Check for imageUrl instead of image file
-        if (!pastEvent.name || !pastEvent.date || !pastEvent.imageUrl) {
-            alert('Please fill out all fields for the past event, including the Image URL.');
+        if (!pastEvent.name || !pastEvent.date || (!pastEvent.imageFile && !pastEvent.imageUrl)) {
+            alert('Please fill out all fields for the past event, including either an image file or URL.');
             return;
         }
-        console.log('Submitting past event:', pastEvent);
+        
         try {
-            // No image upload needed, directly use imageUrl from state
+            let imageUrl = pastEvent.imageUrl;
+            
+            // If there's a file to upload
+            if (pastEvent.imageFile) {
+                // Create a reference to the file in Firebase Storage
+                const imageRef = ref(storage, `past-events/${Date.now()}-${pastEvent.imageFile.name}`);
+                
+                // Upload the file
+                await uploadBytes(imageRef, pastEvent.imageFile);
+                
+                // Get the download URL
+                imageUrl = await getDownloadURL(imageRef);
+            }
+            
+            // Prepare data for Firestore
             const dataToUpload = {
-                ...pastEvent
+                name: pastEvent.name,
+                date: pastEvent.date,
+                description: pastEvent.description,
+                location: pastEvent.location,
+                imageUrl: imageUrl
             };
-            console.log('Data to upload to Firestore:', dataToUpload);
+            
+            // Add to Firestore
             await addDoc(collection(db, 'pastEvents'), dataToUpload);
+            
             // Set flag to notify UserEventsPage to refresh
             localStorage.setItem('eventsUpdated', 'true');
             alert('Past event added successfully!');
-            setPastEvent({ name: '', date: '', description: '', imageUrl: '' }); // Reset imageUrl
+            
+            // Reset form
+            setPastEvent({ 
+                name: '', 
+                date: '', 
+                description: '', 
+                location: '',
+                imageUrl: '',
+                imageFile: null 
+            });
+            
             fetchEvents();
         } catch (error) {
             console.error('Error adding past event: ', error);
-            alert('Failed to add past event.');
+            alert('Failed to add past event: ' + error.message);
         }
     };
 
@@ -515,8 +574,63 @@ const ManageEvents = () => {
                         <input type="text" name="name" value={pastEvent.name} onChange={handlePastChange} placeholder="Event Name" required />
                         <input type="date" name="date" value={pastEvent.date} onChange={handlePastChange} required />
                         <textarea name="description" value={pastEvent.description} onChange={handlePastChange} placeholder="Description"></textarea>
-                        {/* Changed to text input for Image URL */}
-                        <input type="text" name="imageUrl" value={pastEvent.imageUrl} onChange={handlePastChange} placeholder="Image URL" required />
+                        <input type="text" name="location" value={pastEvent.location} onChange={handlePastChange} placeholder="Location" />
+                        <div className="image-upload-container">
+                            <div className="file-input-wrapper">
+                                <input 
+                                    type="file" 
+                                    name="imageFile"
+                                    id="past-event-image" 
+                                    accept="image/*" 
+                                    onChange={handlePastChange}
+                                />
+                                <button 
+                                    type="button"
+                                    className="file-upload-btn"
+                                    onClick={() => document.getElementById('past-event-image').click()}
+                                >
+                                    {pastEvent.imageFile ? 'Change Image File' : 'Choose Image File'}
+                                </button>
+                            </div>
+                            {pastEvent.imageFile && (
+                                <div className="selected-file">
+                                    <span>Selected: {pastEvent.imageFile.name}</span>
+                                    <button 
+                                        type="button" 
+                                        className="clear-file"
+                                        onClick={() => {
+                                            setPastEvent({
+                                                ...pastEvent,
+                                                imageFile: null
+                                            });
+                                            // Reset the file input
+                                            const fileInput = document.getElementById('past-event-image');
+                                            if (fileInput) fileInput.value = '';
+                                        }}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            )}
+                            <div className="or-divider">OR</div>
+                            <input 
+                                type="text" 
+                                name="imageUrl" 
+                                value={pastEvent.imageUrl} 
+                                onChange={handlePastChange} 
+                                placeholder="Image URL (alternative to file upload)" 
+                            />
+                            {(pastEvent.imageFile || pastEvent.imageUrl) && (
+                                <div className="image-preview">
+                                    <p>Image Preview:</p>
+                                    <img 
+                                        src={pastEvent.imageFile ? URL.createObjectURL(pastEvent.imageFile) : pastEvent.imageUrl} 
+                                        alt="Preview" 
+                                        style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'cover' }} 
+                                    />
+                                </div>
+                            )}
+                        </div>
                         <button type="submit">Add Past Event</button>
                     </form>
                 </div>
@@ -586,7 +700,10 @@ const ManageEvents = () => {
                             )}
                             {/* Add imageUrl field to edit modal for past events */}
                             {editingEvent.type === 'past' && (
-                                <input type="text" name="imageUrl" value={editingEvent.imageUrl || ''} onChange={(e) => setEditingEvent({ ...editingEvent, imageUrl: e.target.value })} placeholder="Image URL" />
+                                <>
+                                    <input type="text" name="location" value={editingEvent.location || ''} onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })} placeholder="Location" />
+                                    <input type="text" name="imageUrl" value={editingEvent.imageUrl || ''} onChange={(e) => setEditingEvent({ ...editingEvent, imageUrl: e.target.value })} placeholder="Image URL" />
+                                </>
                             )}
                             <button type="submit">Update Event</button>
                             <button onClick={() => setIsEditing(false)}>Cancel</button>
